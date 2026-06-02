@@ -29,12 +29,17 @@ exports.main = async () => {
       .orderBy('updatedAt', 'desc')
       .get()
 
-    console.log('[getMyTrips] 查询成功, 数量:', res.data.length)
+    // 过滤已解散的旅行（兼容旧数据无 status 字段，视为 active）
+    var activeTrips = res.data.filter(function (t) {
+      return t.status !== 'dissolved'
+    })
+
+    console.log('[getMyTrips] 查询成功, 总数:', res.data.length, '活跃:', activeTrips.length)
 
     return {
       success: true,
       data: {
-        trips: res.data
+        trips: activeTrips
       },
       message: ''
     }

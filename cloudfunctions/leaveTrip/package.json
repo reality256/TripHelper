@@ -1,0 +1,9 @@
+{
+  "name": "leaveTrip",
+  "version": "1.0.0",
+  "description": "普通成员退出旅行",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

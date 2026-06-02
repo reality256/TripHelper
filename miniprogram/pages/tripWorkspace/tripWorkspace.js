@@ -51,6 +51,7 @@ Page({
     hasSettlement: false,
     settlementLoading: false,
     settlementLoaded: false,
+    settlementStale: false,
 
     // 待办模块
     todos: [],
@@ -78,13 +79,28 @@ Page({
       var app = getApp()
       var user = app.globalData.user
       if (user) {
-        this.setData({
-          user: user,
-          profileNickName: user.nickName || '',
-          profileAvatarUrl: user.avatarUrl || ''
-        })
+        var that = this
+        var rawAvatar = user.avatarUrl || ''
+        if (rawAvatar && rawAvatar.indexOf('cloud://') === 0) {
+          wx.cloud.getTempFileURL({ fileList: [rawAvatar] }).then(function (res) {
+            var tmp = (res.fileList && res.fileList[0]) ? res.fileList[0].tempFileURL : rawAvatar
+            that.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: tmp })
+          }).catch(function () {
+            that.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: '' })
+          })
+        } else {
+          this.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: rawAvatar })
+        }
       }
-      this.loadTabData()
+      // 账单 tab：从添加页返回时刷新账单，已有结算结果则标记过期
+      if (this.data.activeTab === 'expenses' && this.data.expensesLoaded) {
+        this.loadExpenses()
+        if (this.data.settlementLoaded) {
+          this.setData({ settlementStale: true })
+        }
+      } else {
+        this.loadTabData()
+      }
     }
   },
 
@@ -104,35 +120,69 @@ Page({
       var user = app.globalData.user
       var myOpenid = app.globalData.openid || ''
 
-      var membersWithChar = members.map(function (m) {
-        return {
-          openid: m.openid,
-          nickName: m.nickName,
-          avatarUrl: m.avatarUrl,
-          isCreator: m.isCreator,
-          firstChar: (m.nickName || '?')[0]
+      // 收集所有 cloud:// 文件 ID，准备批量转换
+      var cloudFileIds = []
+      if (user && user.avatarUrl && user.avatarUrl.indexOf('cloud://') === 0) {
+        cloudFileIds.push(user.avatarUrl)
+      }
+      for (var j = 0; j < members.length; j++) {
+        if (members[j].avatarUrl && members[j].avatarUrl.indexOf('cloud://') === 0) {
+          cloudFileIds.push(members[j].avatarUrl)
+        }
+      }
+
+      // 将 cloud:// 转为临时 HTTPS URL
+      var convertAvatars = function (cb) {
+        if (cloudFileIds.length === 0) return cb()
+        wx.cloud.getTempFileURL({ fileList: cloudFileIds }).then(function (res) {
+          var fileMap = {}
+          var fileList = res.fileList || []
+          for (var k = 0; k < fileList.length; k++) {
+            if (fileList[k].tempFileURL) {
+              fileMap[fileList[k].fileID] = fileList[k].tempFileURL
+            }
+          }
+          cb(fileMap)
+        }).catch(function () { cb() })
+      }
+
+      convertAvatars(function (fileMap) {
+        fileMap = fileMap || {}
+
+        var membersWithChar = members.map(function (m) {
+          var displayAvatar = m.avatarUrl
+          if (fileMap[m.avatarUrl]) displayAvatar = fileMap[m.avatarUrl]
+          return {
+            openid: m.openid,
+            nickName: m.nickName,
+            avatarUrl: displayAvatar,
+            isCreator: m.isCreator,
+            firstChar: (m.nickName || '?')[0]
+          }
+        })
+
+        var displayUserAvatar = user ? (user.avatarUrl || '') : ''
+        if (fileMap[displayUserAvatar]) displayUserAvatar = fileMap[displayUserAvatar]
+
+        that.setData({
+          trip: data.trip,
+          memberCount: membersWithChar.length,
+          members: membersWithChar,
+          memberMap: memberMap,
+          myOpenid: myOpenid,
+          user: user,
+          profileNickName: user ? (user.nickName || '') : '',
+          profileAvatarUrl: displayUserAvatar,
+          loading: false
+        })
+        that.loadTabData()
+
+        if (user && !user.profileCompleted) {
+          setTimeout(function () {
+            that.setData({ showProfileModal: true })
+          }, 600)
         }
       })
-
-      that.setData({
-        trip: data.trip,
-        memberCount: membersWithChar.length,
-        members: membersWithChar,
-        memberMap: memberMap,
-        myOpenid: myOpenid,
-        user: user,
-        profileNickName: user ? (user.nickName || '') : '',
-        profileAvatarUrl: user ? (user.avatarUrl || '') : '',
-        loading: false
-      })
-      that.loadTabData()
-
-      // 如果用户资料未完善，弹出资料设置弹窗
-      if (user && !user.profileCompleted) {
-        setTimeout(function () {
-          that.setData({ showProfileModal: true })
-        }, 600)
-      }
     }).catch(function (err) {
       console.error('[tripWorkspace] 加载失败:', err)
       that.setData({ loading: false })
@@ -241,21 +291,10 @@ Page({
     var that = this
     var memberMap = this.data.memberMap || {}
 
-    this.setData({
-      expensesLoading: true, expensesError: '',
-      settlementLoading: true
-    })
+    this.setData({ expensesLoading: true, expensesError: '' })
 
-    // 同时加载账单和结算
-    var p1 = expenseService.getExpenses(this.data.tripId)
-    var p2 = settlementService.calculateSettlement(this.data.tripId)
-
-    Promise.all([p1, p2]).then(function (results) {
-      var expenseData = results[0]
-      var settlementData = results[1]
-
-      // 格式化账单列表
-      var expenses = (expenseData.expenses || []).map(function (e) {
+    expenseService.getExpenses(this.data.tripId).then(function (data) {
+      var expenses = (data.expenses || []).map(function (e) {
         var dateStr = ''
         if (e.createdAt) {
           var d = new Date(e.createdAt)
@@ -276,21 +315,46 @@ Page({
         }
       })
 
-      // 格式化结算数据（防御 undefined）
-      var balances = (settlementData.balances || []).map(function (b) {
+      that.setData({
+        expenses: expenses,
+        expenseTotal: (data.totalAmount || 0).toFixed(2),
+        expenseEmpty: expenses.length === 0,
+        expensesLoading: false,
+        expensesLoaded: true,
+        expensesError: ''
+      })
+    }).catch(function (err) {
+      console.error('[tripWorkspace] 账单加载失败:', err)
+      that.setData({
+        expensesLoading: false,
+        expensesLoaded: false,
+        expensesError: err.message || '账单加载失败'
+      })
+    })
+  },
+
+  // 手动计算结算
+  onCalculateSettlement: function () {
+    var that = this
+    if (this.data.expenseEmpty) {
+      wx.showToast({ title: '暂无账单，暂不需要结算', icon: 'none' })
+      return
+    }
+    this.setData({ settlementLoading: true, settlementError: '' })
+
+    settlementService.calculateSettlement(this.data.tripId).then(function (data) {
+      var balances = (data.balances || []).map(function (b) {
         var net = b.net || 0
-        var paid = b.paid || 0
-        var shouldPay = b.shouldPay || 0
         return {
           nickName: b.nickName || '',
           netText: (net >= 0 ? '+' : '') + net.toFixed(2),
           netClass: net >= 0 ? 'net-positive' : 'net-negative',
-          paidText: paid.toFixed(2),
-          shouldPayText: shouldPay.toFixed(2)
+          paidText: (b.paid || 0).toFixed(2),
+          shouldPayText: (b.shouldPay || 0).toFixed(2)
         }
       })
 
-      var transfers = (settlementData.transfers || []).map(function (t) {
+      var transfers = (data.transfers || []).map(function (t) {
         return {
           fromName: t.fromName || '',
           toName: t.toName || '',
@@ -299,26 +363,18 @@ Page({
       })
 
       that.setData({
-        expenses: expenses,
-        expenseTotal: (expenseData.totalAmount || 0).toFixed(2),
-        expenseEmpty: expenses.length === 0,
-        expensesLoading: false,
-        expensesLoaded: true,
-        expensesError: '',
         balances: balances,
         transfers: transfers,
         hasSettlement: balances.length > 0,
         settlementLoading: false,
-        settlementLoaded: true
+        settlementLoaded: true,
+        settlementStale: false
       })
     }).catch(function (err) {
-      console.error('[tripWorkspace] 账单加载失败:', err)
+      console.error('[tripWorkspace] 结算计算失败:', err)
       that.setData({
-        expensesLoading: false,
-        expensesLoaded: false,
-        expensesError: err.message || '账单加载失败',
         settlementLoading: false,
-        settlementLoaded: false
+        settlementError: err.message || '结算计算失败'
       })
     })
   },
@@ -446,14 +502,77 @@ Page({
     wx.redirectTo({ url: '/pages/tripWorkspace/tripWorkspace?tripId=' + tripId })
   },
 
+  // ===== 旅行管理：解散 / 退出 =====
+
+  // 创建者解散旅行（二次确认）
+  onDissolveTrip: function () {
+    var that = this
+    wx.showModal({
+      title: '确认解散旅行？',
+      content: '解散后，所有成员都无法继续访问该旅行，相关行程、账单和待办也将不可再使用。',
+      confirmText: '确认解散',
+      confirmColor: '#E74C3C',
+      success: function (res) {
+        if (!res.confirm) return
+        wx.showLoading({ title: '解散中...' })
+        tripService.dissolveTrip(that.data.tripId).then(function () {
+          wx.hideLoading()
+          wx.showToast({ title: '旅行已解散', icon: 'success' })
+          setTimeout(function () {
+            wx.reLaunch({ url: '/pages/index/index' })
+          }, 1000)
+        }).catch(function (err) {
+          wx.hideLoading()
+          wx.showToast({ title: err.message || '解散失败', icon: 'none' })
+        })
+      }
+    })
+  },
+
+  // 普通成员退出旅行（二次确认）
+  onLeaveTrip: function () {
+    var that = this
+    wx.showModal({
+      title: '确认退出旅行？',
+      content: '退出后，你将无法继续查看本次旅行的行程、账单和待办。退出不会删除你已经创建或参与的历史账单。',
+      confirmText: '确认退出',
+      confirmColor: '#E74C3C',
+      success: function (res) {
+        if (!res.confirm) return
+        wx.showLoading({ title: '退出中...' })
+        tripService.leaveTrip(that.data.tripId).then(function () {
+          wx.hideLoading()
+          wx.showToast({ title: '已退出旅行', icon: 'success' })
+          setTimeout(function () {
+            wx.reLaunch({ url: '/pages/index/index' })
+          }, 1000)
+        }).catch(function (err) {
+          wx.hideLoading()
+          wx.showToast({ title: err.message || '退出失败', icon: 'none' })
+        })
+      }
+    })
+  },
+
   // ===== 用户资料编辑 =====
   openProfileModal: function () {
+    var that = this
     var user = this.data.user || getApp().globalData.user || {}
-    this.setData({
-      showProfileModal: true,
-      profileNickName: user.nickName || '',
-      profileAvatarUrl: user.avatarUrl || ''
-    })
+    var avatarUrl = user.avatarUrl || ''
+    if (avatarUrl && avatarUrl.indexOf('cloud://') === 0) {
+      wx.cloud.getTempFileURL({ fileList: [avatarUrl] }).then(function (res) {
+        var tmp = (res.fileList && res.fileList[0]) ? res.fileList[0].tempFileURL : ''
+        that.setData({ showProfileModal: true, profileNickName: user.nickName || '', profileAvatarUrl: tmp })
+      }).catch(function () {
+        that.setData({ showProfileModal: true, profileNickName: user.nickName || '', profileAvatarUrl: '' })
+      })
+    } else {
+      this.setData({
+        showProfileModal: true,
+        profileNickName: user.nickName || '',
+        profileAvatarUrl: avatarUrl
+      })
+    }
   },
 
   closeProfileModal: function () {

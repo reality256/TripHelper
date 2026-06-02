@@ -75,10 +75,17 @@
       </view>
 
       <block wx:if="{{expensesLoaded}}">
-      <!-- 总金额 -->
-      <view class="card total-card">
-        <view class="total-label">总消费</view>
-        <view class="total-amount">¥{{expenseTotal}}</view>
+
+      <!-- 顶部操作区：总金额 + 按钮 -->
+      <view class="expense-top-bar">
+        <view class="expense-summary">
+          <text class="expense-sum-label">总消费 ¥{{expenseTotal}}</text>
+          <text class="expense-sum-count" wx:if="{{!expenseEmpty}}"> · {{expenses.length}} 笔</text>
+        </view>
+        <view class="expense-top-actions">
+          <view class="btn-primary btn-sm" bindtap="goAddExpense">添加账单</view>
+          <view class="btn-secondary btn-sm {{expenseEmpty ? 'btn-disabled' : ''}}" bindtap="onCalculateSettlement">计算结算</view>
+        </view>
       </view>
 
       <!-- 账单列表 -->
@@ -102,16 +109,39 @@
         <view class="empty-state-text">还没有账单记录</view>
       </view>
 
+      <!-- 结算：过期提示 -->
+      <view class="stale-banner" wx:if="{{settlementStale && settlementLoaded}}">
+        <text>⚠️ 账单已更新，当前结算结果可能不是最新。请重新计算。</text>
+      </view>
+
       <!-- 结算：加载中 -->
-      <view class="loading-state" wx:if="{{settlementLoading && expensesLoaded && !expenseEmpty}}">
+      <view class="loading-state" wx:if="{{settlementLoading}}">
         <view class="loading-spinner"></view>
         <text>正在计算结算结果...</text>
       </view>
 
+      <!-- 结算：失败 -->
+      <view class="error-state" wx:elif="{{settlementError}}">
+        <view class="error-state-icon">⚠️</view>
+        <view class="error-state-text">{{settlementError}}</view>
+        <view class="btn-secondary" bindtap="onCalculateSettlement">重试</view>
+      </view>
+
+      <!-- 结算：未计算 -->
+      <view class="settle-placeholder" wx:elif="{{!settlementLoaded}}">
+        <text>点击「计算结算」，查看当前账单的分摊结果</text>
+      </view>
+
       <!-- 结算结果 -->
-      <view class="settle-section" wx:if="{{settlementLoaded && hasSettlement}}">
+      <view class="settle-section" wx:if="{{settlementLoaded && !settlementLoading}}">
         <view class="section-title">结算结果</view>
 
+        <!-- 无转账 -->
+        <view class="card settle-card" wx:if="{{!hasSettlement}}">
+          <text class="settle-done">🎉 账目已结清</text>
+        </view>
+
+        <block wx:if="{{hasSettlement}}">
         <!-- 每人收支 -->
         <view class="card settle-card" wx:for="{{balances}}" wx:key="nickName">
           <view class="settle-top">
@@ -125,21 +155,15 @@
 
         <!-- 转账方案 -->
         <view class="section-title" wx:if="{{transfers.length > 0}}">建议转账</view>
-        <view class="card settle-card" wx:if="{{transfers.length === 0}}">
-          <text class="settle-done">🎉 账目已结清</text>
-        </view>
         <view class="card transfer-card" wx:for="{{transfers}}" wx:key="index">
           <text class="tf-from">{{item.fromName}}</text>
           <text class="tf-arrow"> → </text>
           <text class="tf-to">{{item.toName}}</text>
           <text class="tf-amount">¥{{item.amountText}}</text>
         </view>
+        </block>
       </view>
 
-      <!-- 添加账单 -->
-      <view class="tab-action">
-        <view class="btn-primary" bindtap="goAddExpense">添加账单</view>
-      </view>
       </block><!-- end expensesLoaded -->
 
     </block>
@@ -222,6 +246,22 @@
           <text class="member-badge" wx:if="{{item.isCreator}}">创建者</text>
           <text class="member-me" wx:if="{{item.openid === myOpenid}}">我</text>
         </view>
+      </view>
+
+      <!-- 旅行管理 -->
+      <view class="set-section-title">旅行管理</view>
+
+      <!-- 创建者看到：解散旅行 -->
+      <view class="card danger-card" wx:if="{{trip.creatorOpenid === myOpenid}}">
+        <view class="danger-desc">你是本次旅行的创建者，可以解散该旅行。</view>
+        <view class="danger-desc">解散后，所有成员都无法继续访问该旅行。</view>
+        <view class="btn-danger" bindtap="onDissolveTrip">解散旅行</view>
+      </view>
+
+      <!-- 普通成员看到：退出旅行 -->
+      <view class="card danger-card" wx:if="{{trip.creatorOpenid !== myOpenid}}">
+        <view class="danger-desc">你可以退出本次旅行。退出后，该旅行将不再显示在你的旅行列表中。</view>
+        <view class="btn-danger" bindtap="onLeaveTrip">退出旅行</view>
       </view>
 
       <!-- 邀请码 -->

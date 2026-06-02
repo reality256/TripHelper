@@ -31,12 +31,17 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '旅行不存在' }
     }
 
-    // 2. 权限校验：当前用户必须属于该旅行
-    if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
-      return { success: false, data: null, message: '你没有权限操作该旅行' }
+    // 2. 校验旅行状态：已解散的拒绝访问
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
     }
 
-    // 3. 查询成员信息
+    // 3. 权限校验：当前用户必须属于该旅行
+    if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
+      return { success: false, data: null, message: '你没有权限查看该旅行' }
+    }
+
+    // 4. 查询成员信息
     const memberOpenids = trip.memberOpenids || []
     let members = []
     if (memberOpenids.length > 0) {
@@ -53,7 +58,7 @@ exports.main = async (event) => {
       })
     }
 
-    // 4. 查询账单概览（集合可能尚不存在，兼容处理）
+    // 5. 查询账单概览（集合可能尚不存在，兼容处理）
     let expenseSummary = { count: 0, totalAmount: 0 }
     try {
       const expenseRes = await db.collection('expenses')
@@ -70,7 +75,7 @@ exports.main = async (event) => {
       console.log('[getTripDetail] expenses 集合尚不可用，跳过')
     }
 
-    // 5. 查询行程概览（集合可能尚不存在，兼容处理）
+    // 6. 查询行程概览（集合可能尚不存在，兼容处理）
     let itineraryPreview = []
     try {
       const itineraryRes = await db.collection('itinerary')

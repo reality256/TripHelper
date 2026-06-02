@@ -68,6 +68,7 @@ exports.main = async (event) => {
       creatorOpenid: openid,
       memberOpenids: [openid],
       inviteCode,
+      status: 'active',
       createdAt: new Date(),
       updatedAt: new Date()
     }
