@@ -15,7 +15,19 @@
     </view>
     <view class="form-group">
       <view class="form-label">地点</view>
-      <input class="form-input" placeholder="选填" value="{{location}}" bindinput="onLocationInput" maxlength="100"/>
+      <!-- 已选地图地点 -->
+      <view class="location-card" wx:if="{{hasMapLocation}}" bindtap="onChooseLocation">
+        <view class="loc-name">{{locationName}}</view>
+        <view class="loc-addr" wx:if="{{locationAddress}}">{{locationAddress}}</view>
+        <view class="loc-hint">点击重新选择</view>
+      </view>
+      <!-- 未选：点击选址 -->
+      <view class="location-picker" wx:else bindtap="onChooseLocation">
+        <text class="loc-picker-icon">📍</text>
+        <text class="loc-picker-text">点击选择地图地点</text>
+        <text class="loc-picker-arrow">❯</text>
+      </view>
+      <view class="loc-clear" wx:if="{{hasMapLocation}}" catchtap="onClearLocation">清除地点</view>
     </view>
     <view class="form-group">
       <view class="form-label">开始时间</view>

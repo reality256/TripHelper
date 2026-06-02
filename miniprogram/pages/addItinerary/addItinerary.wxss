@@ -1,9 +1,61 @@
 /* pages/addItinerary/addItinerary.wxss */
 
-.page-title {
-  margin-bottom: 40rpx;
+.page-title { margin-bottom: 40rpx; }
+.card { margin-bottom: 56rpx; }
+
+/* 地图选址 */
+.location-picker {
+  display: flex;
+  align-items: center;
+  background: #F5F7F6;
+  border: 2rpx dashed #D0D0D0;
+  border-radius: 14rpx;
+  padding: 28rpx 24rpx;
 }
 
-.card {
-  margin-bottom: 56rpx;
+.location-picker:active { background: #EEF0EF; }
+
+.loc-picker-icon { font-size: 32rpx; margin-right: 16rpx; }
+
+.loc-picker-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #BBB;
+}
+
+.loc-picker-arrow { font-size: 28rpx; color: #CCC; }
+
+/* 已选地点卡片 */
+.location-card {
+  background: #F0FAF7;
+  border: 2rpx solid #C8E6C9;
+  border-radius: 14rpx;
+  padding: 24rpx 28rpx;
+}
+
+.location-card:active { background: #E8F5F3; }
+
+.loc-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 4rpx;
+}
+
+.loc-addr {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 4rpx;
+}
+
+.loc-hint {
+  font-size: 22rpx;
+  color: #CCC;
+}
+
+.loc-clear {
+  text-align: right;
+  font-size: 24rpx;
+  color: #E74C3C;
+  padding: 10rpx 0;
 }

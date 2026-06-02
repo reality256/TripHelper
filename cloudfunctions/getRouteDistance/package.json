@@ -1,0 +1,7 @@
+{
+  "name": "getRouteDistance",
+  "version": "1.0.0",
+  "description": "调用腾讯地图API计算驾车距离和耗时",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "~2.6.3" }
+}

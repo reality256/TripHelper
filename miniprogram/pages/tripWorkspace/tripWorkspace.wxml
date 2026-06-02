@@ -32,18 +32,57 @@
         <view class="empty-state-text">暂无行程安排</view>
       </view>
 
-      <!-- 行程列表：按日期分组 -->
-      <view class="itin-list" wx:if="{{itineraryLoaded && !itineraryEmpty}}">
+      <!-- 视图切换 + 行程内容 -->
+      <block wx:if="{{itineraryLoaded && !itineraryEmpty}}">
+      <view class="itin-view-bar">
+        <view class="itin-view-tab {{itineraryView === 'list' ? 'active' : ''}}" data-view="list" bindtap="switchItineraryView">列表</view>
+        <view class="itin-view-tab {{itineraryView === 'timeline' ? 'active' : ''}}" data-view="timeline" bindtap="switchItineraryView">时间线</view>
+        <view class="itin-map-btn" bindtap="goScheduleMap">🗺 地图</view>
+      </view>
+
+      <!-- 列表视图 -->
+      <view class="itin-list" wx:if="{{itineraryView === 'list'}}">
         <view class="itin-group" wx:for="{{itineraryGroups}}" wx:key="date">
           <view class="itin-date">{{item.date}}</view>
-          <view class="card itin-card" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
+          <view class="card itin-card {{row.isEnded ? 'itin-ended' : ''}} {{row.showActive ? 'itin-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
             <view class="itin-header">
-              <text class="itin-title">{{row.title}}</text>
-              <text class="itin-del {{itineraryManaging ? '' : 'itin-del-hidden'}}" data-id="{{row._id}}" bindtap="deleteItinerary">✕</text>
+              <view class="itin-left">
+                <text class="itin-index">{{row.dailyIndex}}</text>
+                <text class="itin-title">{{row.title}}</text>
+                <text class="itin-status" wx:if="{{row.isOngoing}}">进行中</text>
+                <text class="itin-status itin-status-upcoming" wx:elif="{{row.showActive}}">即将开始</text>
+              </view>
+              <view class="itin-right">
+                <text class="itin-time" wx:if="{{row.timeText}}">{{row.timeText}}</text>
+                <text class="itin-del {{itineraryManaging ? '' : 'itin-del-hidden'}}" data-id="{{row._id}}" bindtap="deleteItinerary">✕</text>
+              </view>
             </view>
-            <view class="itin-row" wx:if="{{row.timeText}}">🕐 {{row.timeText}}</view>
             <view class="itin-row" wx:if="{{row.location}}">📍 {{row.location}}</view>
+            <view class="itin-row itin-conflict" wx:if="{{row.hasConflict}}">⚠️ 时间冲突：与「{{row.conflictNames}}」重叠</view>
             <view class="itin-note" wx:if="{{row.note}}">{{row.note}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 时间线视图 -->
+      <view class="timeline-view" wx:if="{{itineraryView === 'timeline'}}">
+        <view class="tl-group" wx:for="{{itineraryGroups}}" wx:key="date">
+          <view class="tl-date">{{item.date}}</view>
+          <view class="tl-item {{row.isEnded ? 'tl-ended' : ''}} {{row.showActive ? 'tl-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
+            <view class="tl-marker">
+              <view class="tl-dot"></view>
+              <view class="tl-line" wx:if="{{index < item.items.length - 1}}"></view>
+            </view>
+            <view class="tl-content">
+              <view class="tl-header">
+                <text class="itin-index">{{row.dailyIndex}}</text>
+                <text class="tl-time">{{row.timeText || '未设置时间'}}</text>
+              </view>
+              <text class="tl-title">{{row.title}}</text>
+              <text class="tl-location" wx:if="{{row.location}}">📍 {{row.location}}</text>
+              <text class="tl-note" wx:if="{{row.note}}">{{row.note}}</text>
+              <text class="tl-conflict" wx:if="{{row.hasConflict}}">⚠️ 与「{{row.conflictNames}}」时间重叠</text>
+            </view>
           </view>
         </view>
       </view>
@@ -56,6 +95,7 @@
         <view class="btn-primary btn-half" bindtap="goAddItinerary">添加行程</view>
         <view class="btn-secondary btn-half" bindtap="toggleItineraryManage">完成</view>
       </view>
+      </block><!-- end itineraryLoaded -->
     </block>
 
     <!-- ===== 账单 tab ===== -->

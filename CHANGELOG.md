@@ -1,6 +1,65 @@
 # CHANGELOG
 
-## V2.3 - 细节优化
+## V3.0 - 地图行程与预算管理升级（开发中）
+
+### 修改时间
+- 2026-06-02
+
+### 已完成
+
+**数据结构与工具函数**
+- 新增 `utils/schedule.js`：行程分组、排序、日序号、状态判断（upcoming/ongoing/ended）、冲突检测、旧数据兼容
+- 新增 `utils/budget.js`：净消费计算、分类花费统计、预算总览、人均消耗
+- 新增 `utils/map.js`：地点归一化、marker/polyline 构建、Haversine 直线距离、驾车时间估算
+
+**地图选址接入**
+- `addItinerary` 云函数支持 locationName/locationAddress/latitude/longitude 字段
+- `addItinerary` 页面接入 `wx.chooseLocation()`，点击选择地图地点，自动回填名称/地址/经纬度
+- 已选地点显示绿色卡片，支持清除重选
+- 旧数据兼容：无经纬度行程正常展示
+
+**行程展示升级**
+- 每日行程序号（①②③），按 startTime 排序
+- 卡片布局优化：序号+标题左、时间右
+- 状态感知：进行中蓝色左边框高亮、已结束 55% 透明变灰
+- 冲突检测：同天时间重叠自动提示 ⚠ 冲突项名称
+- 列表/时间线双视图切换，时间线带圆点竖线和状态色
+
+**地图全览**
+- 新增 `pages/schedule-map/schedule-map` 页面
+- 日期下拉切换，marker 带编号常驻气泡，绿色带箭头 polyline 路线
+- 接入腾讯地图 WebService API（`getRouteDistance` 云函数）计算真实驾车距离和耗时
+- 路线摘要栏：地点数、距离、预计耗时
+
+**预算管理（前端工具已就绪，UI 待开发）**
+- `utils/budget.js` 完整预算计算逻辑
+
+### 本次新增云函数
+- `getRouteDistance`：调用腾讯地图 API 计算驾车路线
+
+### 本次修改云函数
+- `addItinerary`：新增地图选址字段
+
+### 本次新增页面
+- `pages/schedule-map/schedule-map`
+
+### 本次新增工具函数
+- `utils/schedule.js`
+- `utils/budget.js`
+- `utils/map.js`
+
+### 需要部署的云函数
+- `addItinerary`、`getRouteDistance`
+
+### 未尽事宜（后续继续）
+- 预算设置页面（`pages/budget-setting`）
+- 账单页顶部预算总览卡片
+- 分类预算展示与超预算提醒
+- 预算权限控制（仅创建者可修改）
+- 时间线视图点击跳转详情
+- 地图 marker 自定义图标优化
+
+---
 
 ### 修改时间
 - 2026-06-02

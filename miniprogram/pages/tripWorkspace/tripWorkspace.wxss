@@ -45,6 +45,42 @@ page {
 }
 
 /* ===== 行程 tab ===== */
+
+/* 视图切换 */
+.itin-view-bar {
+  display: flex;
+  padding: 0 24rpx 16rpx;
+  gap: 12rpx;
+}
+
+.itin-view-tab {
+  padding: 10rpx 28rpx;
+  font-size: 24rpx;
+  color: #999;
+  background: #FFF;
+  border-radius: 24rpx;
+  border: 2rpx solid #F0F0F0;
+}
+
+.itin-view-tab.active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: #E8F5F3;
+}
+
+.itin-map-btn {
+  margin-left: auto;
+  font-size: 24rpx;
+  color: var(--primary);
+  padding: 10rpx 20rpx;
+  background: #E8F5F3;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.itin-map-btn:active { opacity: 0.7; }
+
+/* 列表视图 */
 .itin-list {
   padding: 0 24rpx;
 }
@@ -65,11 +101,41 @@ page {
   margin-bottom: 8rpx;
 }
 
+.itin-card.itin-ended {
+  opacity: 0.55;
+}
+
+.itin-card.itin-active {
+  border-left: 6rpx solid var(--primary);
+  background: #FAFFFE;
+}
+
 .itin-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+}
+
+.itin-left {
+  display: flex;
   align-items: center;
-  margin-bottom: 8rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.itin-index {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--primary);
+  background: #E8F5F3;
+  border-radius: 50%;
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 14rpx;
 }
 
 .itin-title {
@@ -77,6 +143,34 @@ page {
   font-weight: 500;
   color: #1A1A1A;
   flex: 1;
+  min-width: 0;
+}
+
+.itin-status {
+  font-size: 20rpx;
+  color: #FFF;
+  background: var(--primary);
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  margin-left: 10rpx;
+  flex-shrink: 0;
+}
+
+.itin-status-upcoming {
+  background: #E67E22;
+}
+
+.itin-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.itin-time {
+  font-size: 24rpx;
+  color: #888;
+  white-space: nowrap;
 }
 
 .itin-del {
@@ -97,13 +191,20 @@ page {
 .itin-row {
   font-size: 24rpx;
   color: #888;
-  margin-bottom: 2rpx;
+  margin-top: 8rpx;
+  margin-left: 54rpx;
+}
+
+.itin-conflict {
+  color: #E67E22;
+  font-size: 22rpx;
 }
 
 .itin-note {
   font-size: 22rpx;
   color: #BBB;
   margin-top: 6rpx;
+  margin-left: 54rpx;
   padding-top: 10rpx;
   border-top: 1rpx solid #F5F5F5;
 }
@@ -273,6 +374,103 @@ page {
   margin-top: 6rpx;
   padding-top: 10rpx;
   border-top: 1rpx solid #F5F5F5;
+}
+
+/* ===== 时间线视图 ===== */
+.timeline-view { padding: 0 24rpx; }
+
+.tl-group { margin-bottom: 24rpx; }
+
+.tl-date {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.tl-item {
+  display: flex;
+  padding-left: 8rpx;
+}
+
+.tl-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48rpx;
+  flex-shrink: 0;
+  padding-top: 4rpx;
+}
+
+.tl-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.tl-item.tl-ended .tl-dot { background: #CCC; }
+.tl-item.tl-active .tl-dot { background: #E67E22; width: 22rpx; height: 22rpx; }
+
+.tl-line {
+  width: 3rpx;
+  flex: 1;
+  background: #E8E8E8;
+  margin: 4rpx 0;
+  min-height: 32rpx;
+}
+
+.tl-content {
+  flex: 1;
+  padding: 0 0 24rpx 16rpx;
+}
+
+.tl-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4rpx;
+}
+
+.tl-header .itin-index {
+  width: 32rpx;
+  height: 32rpx;
+  font-size: 20rpx;
+  margin-right: 10rpx;
+}
+
+.tl-time {
+  font-size: 24rpx;
+  color: #888;
+}
+
+.tl-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 2rpx;
+}
+
+.tl-item.tl-ended .tl-title { color: #BBB; }
+
+.tl-location {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+}
+
+.tl-note {
+  font-size: 22rpx;
+  color: #CCC;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.tl-conflict {
+  font-size: 22rpx;
+  color: #E67E22;
+  margin-top: 4rpx;
+  display: block;
 }
 
 /* 账单卡片可点击进入详情 */

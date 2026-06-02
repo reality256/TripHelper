@@ -1,0 +1,58 @@
+<!--pages/schedule-map/schedule-map.wxml-->
+<view class="loading" wx:if="{{loading}}"><text>加载中...</text></view>
+
+<view class="error-state" wx:elif="{{errorMsg}}">
+  <text>⚠️ {{errorMsg}}</text>
+</view>
+
+<view class="container" wx:else>
+
+  <!-- 日期选择器 -->
+  <view class="date-bar" wx:if="{{dates.length > 0}}">
+    <picker mode="selector" range="{{dates}}" value="{{selectedDateIndex}}" bindchange="onDateChange">
+      <view class="date-picker-btn">{{selectedDate}} ▾</view>
+    </picker>
+  </view>
+
+  <!-- 地图 -->
+  <map class="route-map"
+       latitude="{{mapLatitude}}"
+       longitude="{{mapLongitude}}"
+       scale="13"
+       markers="{{markers}}"
+       polyline="{{polyline}}"
+       show-location="{{true}}"
+       include-points="{{markers_for_include}}"
+       style="width:100%;height:600rpx">
+  </map>
+
+  <!-- 路线摘要 -->
+  <view class="route-summary">
+    <view class="rs-title">{{selectedDate}} 行程路线</view>
+    <view class="rs-stats">
+      <text wx:if="{{summary.locationCount > 0}}">📍 {{summary.locationCount}} 个地点</text>
+      <text wx:if="{{summary.totalDistance}}"> · 🚗 {{summary.totalDistance}}</text>
+      <text wx:if="{{summary.totalTime}}"> · ⏱ {{summary.totalTime}}</text>
+    </view>
+    <view class="rs-missing" wx:if="{{missingCount > 0}}">⚠️ 有 {{missingCount}} 个行程缺少地图位置，未加入路线</view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{points.length === 0}}">
+    <text wx:if="{{schedules.length === 0}}">当天暂无行程，无法生成地图路线。</text>
+    <text wx:elif="{{summary.locationCount === 0}}">所有行程均缺少地图位置，无法生成路线。</text>
+  </view>
+
+  <!-- 地点列表 -->
+  <view class="loc-list" wx:if="{{schedules.length > 0}}">
+    <view class="loc-item" wx:for="{{schedules}}" wx:key="_id">
+      <view class="loc-idx">{{item.dailyIndex}}</view>
+      <view class="loc-info">
+        <text class="loc-title">{{item.title}}</text>
+        <text class="loc-time" wx:if="{{item.startTime}}">{{item.startTime}}{{item.endTime ? ' - ' + item.endTime : ''}}</text>
+        <text class="loc-detail" wx:if="{{item.locationName || item.location}}">{{item.locationName || item.location}}</text>
+      </view>
+    </view>
+  </view>
+
+</view>

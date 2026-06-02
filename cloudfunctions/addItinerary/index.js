@@ -16,7 +16,7 @@ exports.main = async (event) => {
     return { success: false, data: null, message: '无法获取用户身份' }
   }
 
-  const { tripId, date, title, location, startTime, endTime, note } = event
+  const { tripId, date, title, location, startTime, endTime, note, locationName, locationAddress, latitude, longitude } = event
 
   // 服务端校验
   if (!tripId) {
@@ -58,7 +58,11 @@ exports.main = async (event) => {
       tripId,
       title: title.trim(),
       date,
-      location: location || '',
+      location: (locationName || location || '').trim(),
+      locationName: locationName || location || '',
+      locationAddress: locationAddress || '',
+      latitude: Number(latitude) || 0,
+      longitude: Number(longitude) || 0,
       startTime: startTime || '',
       endTime: endTime || '',
       note: note || '',

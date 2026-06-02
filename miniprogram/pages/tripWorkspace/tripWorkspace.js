@@ -7,6 +7,7 @@ var settlementService = require('../../services/settlementService')
 var todoService = require('../../services/todoService')
 var userService = require('../../services/userService')
 var categoryUtils = require('../../utils/expenseCategory')
+var scheduleUtils = require('../../utils/schedule')
 
 Page({
   data: {
@@ -39,6 +40,7 @@ Page({
     itineraryLoading: false,
     itineraryLoaded: false,
     itineraryError: '',
+    itineraryView: 'list',  // 'list' | 'timeline'
 
     // 账单模块
     expenses: [],
@@ -226,29 +228,80 @@ Page({
     this.setData({ itineraryManaging: !this.data.itineraryManaging })
   },
 
+  switchItineraryView: function (e) {
+    var view = e.currentTarget.dataset.view
+    if (view === this.data.itineraryView) return
+    this.setData({ itineraryView: view })
+  },
+
+  goScheduleMap: function () {
+    var dates = []
+    this.data.itineraryGroups.forEach(function (g) { dates.push(g.date) })
+    var today = dates[0] || ''
+    wx.navigateTo({ url: '/pages/schedule-map/schedule-map?tripId=' + this.data.tripId + '&date=' + today })
+  },
+
   loadItinerary: function () {
     var that = this
     this.setData({ itineraryLoading: true, itineraryError: '' })
     itineraryService.getItinerary(this.data.tripId).then(function (data) {
       var list = data.itinerary || []
-      var groupMap = {}
-      list.forEach(function (item) {
-        var d = item.date
-        if (!groupMap[d]) groupMap[d] = { date: d, items: [] }
-        groupMap[d].items.push({
+      var now = new Date()
+      var todayStr = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2)
+
+      // 格式化行程项
+      var formatted = list.map(function (item) {
+        var hasEndTime = !!(item.endTime)
+        var timeText = ''
+        if (item.startTime && item.endTime) {
+          timeText = item.startTime + ' - ' + item.endTime
+        } else if (item.startTime) {
+          timeText = item.startTime
+        }
+        var status = (item.date === todayStr) ? scheduleUtils.getScheduleStatus(item, now) : ''
+        var isOngoing = (status === 'ongoing')
+        var isEnded = (status === 'ended')
+        var isUpcoming = (status === 'upcoming')
+        var showActive = (item.date === todayStr) && (isOngoing || isUpcoming)
+
+        return {
           _id: item._id,
           title: item.title,
-          location: item.location,
-          timeText: item.startTime && item.endTime ? item.startTime + ' - ' + item.endTime :
-                    item.startTime || item.endTime || '',
-          note: item.note
+          location: scheduleUtils.getDisplayLocation(item),
+          locationAddress: scheduleUtils.getDisplayAddress(item),
+          timeText: timeText,
+          startTime: item.startTime || '',
+          endTime: item.endTime || '',
+          note: item.note,
+          date: item.date,
+          status: status,
+          isOngoing: isOngoing,
+          isEnded: isEnded,
+          showActive: showActive,
+          hasLocation: scheduleUtils.hasLocation(item)
+        }
+      })
+
+      // 分组、排序、加序号、冲突检测
+      var groups = scheduleUtils.groupSchedulesByDate(formatted)
+      groups = scheduleUtils.addDailyScheduleIndex(groups)
+
+      // 每日内冲突检测
+      groups.forEach(function (group) {
+        var conflicts = scheduleUtils.detectScheduleConflicts(group.items)
+        var conflictMap = {}
+        conflicts.forEach(function (c) {
+          if (!conflictMap[c.itemAIndex]) conflictMap[c.itemAIndex] = []
+          if (!conflictMap[c.itemBIndex]) conflictMap[c.itemBIndex] = []
+          conflictMap[c.itemAIndex].push(c.itemB)
+          conflictMap[c.itemBIndex].push(c.itemA)
+        })
+        group.items.forEach(function (item, idx) {
+          item.conflictNames = (conflictMap[idx] || []).map(function (c) { return c.title }).join('、')
+          item.hasConflict = !!(conflictMap[idx] && conflictMap[idx].length > 0)
         })
       })
-      var groups = []
-      for (var k in groupMap) {
-        if (groupMap.hasOwnProperty(k)) groups.push(groupMap[k])
-      }
-      groups.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0 })
+
       that.setData({
         itineraryGroups: groups,
         itineraryEmpty: groups.length === 0,
