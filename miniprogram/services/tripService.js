@@ -7,6 +7,7 @@ function getMyTrips() { return cloudService.callCloudFunction('getMyTrips') }
 function getTripDetail(tripId) { return cloudService.callCloudFunction('getTripDetail', { tripId: tripId }) }
 function dissolveTrip(tripId) { return cloudService.callCloudFunction('dissolveTrip', { tripId: tripId }) }
 function leaveTrip(tripId) { return cloudService.callCloudFunction('leaveTrip', { tripId: tripId }) }
+function removeMember(tripId, targetOpenid) { return cloudService.callCloudFunction('removeMember', { tripId: tripId, targetOpenid: targetOpenid }) }
 
 module.exports = {
   createTrip: createTrip,
@@ -14,5 +15,6 @@ module.exports = {
   getMyTrips: getMyTrips,
   getTripDetail: getTripDetail,
   dissolveTrip: dissolveTrip,
-  leaveTrip: leaveTrip
+  leaveTrip: leaveTrip,
+  removeMember: removeMember
 }

@@ -9,6 +9,7 @@
     "pages/addItinerary/addItinerary",
     "pages/expenses/expenses",
     "pages/addExpense/addExpense",
+    "pages/expenseDetail/expenseDetail",
     "pages/addTodo/addTodo",
     "pages/settlement/settlement",
     "pages/members/members"

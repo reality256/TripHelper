@@ -46,14 +46,19 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '该旅行已经解散' }
     }
 
-    // 从 memberOpenids 中移除当前用户
+    // 从 memberOpenids 中移除当前用户，加入 formerMemberOpenids
     var newMembers = trip.memberOpenids.filter(function (id) {
       return id !== openid
     })
+    var formerList = trip.formerMemberOpenids || []
+    if (formerList.indexOf(openid) === -1) {
+      formerList.push(openid)
+    }
 
     await db.collection('trips').doc(tripId).update({
       data: {
         memberOpenids: newMembers,
+        formerMemberOpenids: formerList,
         updatedAt: new Date()
       }
     })

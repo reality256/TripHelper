@@ -1,0 +1,53 @@
+// cloudfunctions/deleteExpense/index.js
+// 软删除账单：只有账单创建者或旅行创建者可操作
+const cloud = require('wx-server-sdk')
+
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const db = cloud.database()
+
+exports.main = async (event) => {
+  const wxContext = cloud.getWXContext()
+  const openid = wxContext.OPENID
+  if (!openid) return { success: false, data: null, message: '无法获取用户身份' }
+
+  const { tripId, expenseId } = event
+  if (!tripId) return { success: false, data: null, message: '缺少旅行 ID' }
+  if (!expenseId) return { success: false, data: null, message: '缺少账单 ID' }
+
+  try {
+    const tripRes = await db.collection('trips').doc(tripId).get()
+    const trip = tripRes.data
+    if (!trip) return { success: false, data: null, message: '旅行不存在' }
+    if (trip.status === 'dissolved') return { success: false, data: null, message: '该旅行已解散' }
+    if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
+      return { success: false, data: null, message: '你没有权限操作该旅行' }
+    }
+
+    const expRes = await db.collection('expenses').doc(expenseId).get()
+    const expense = expRes.data
+    if (!expense) return { success: false, data: null, message: '账单不存在' }
+    if (expense.tripId !== tripId) return { success: false, data: null, message: '账单不属于该旅行' }
+    if (expense.deleted) return { success: false, data: null, message: '该账单已删除' }
+
+    // 权限：账单创建者 或 旅行创建者
+    if (expense.createdBy !== openid && trip.creatorOpenid !== openid) {
+      return { success: false, data: null, message: '你没有权限删除该账单' }
+    }
+
+    // 软删除
+    await db.collection('expenses').doc(expenseId).update({
+      data: {
+        deleted: true,
+        deletedAt: new Date(),
+        deletedBy: openid,
+        updatedAt: new Date()
+      }
+    })
+
+    console.log('[deleteExpense] 账单已软删除, expenseId:', expenseId)
+    return { success: true, data: {}, message: '' }
+  } catch (err) {
+    console.error('[deleteExpense] 执行失败', err)
+    return { success: false, data: null, message: err.message || '删除失败' }
+  }
+}

@@ -1,20 +1,51 @@
 <!--pages/addExpense/addExpense.wxml-->
 <view class="container">
-  <view class="page-title">添加账单</view>
+  <view class="page-title">{{isEdit ? '编辑账单' : '添加账单'}}</view>
 
   <view class="card">
+
+    <!-- 类型切换 -->
+    <view class="form-group">
+      <view class="form-label">类型</view>
+      <view class="type-switch">
+        <view class="type-tab {{type === 'expense' ? 'type-active' : ''}}" bindtap="onToggleType">
+          <text>💰 支出</text>
+        </view>
+        <view class="type-tab {{type === 'income' ? 'type-active type-income' : ''}}" bindtap="onToggleType">
+          <text>💚 入账</text>
+        </view>
+      </view>
+    </view>
+
     <view class="form-group">
       <view class="form-label">账单标题</view>
       <input class="form-input" placeholder="例如：午餐火锅" value="{{title}}" bindinput="onTitleInput" maxlength="30"/>
     </view>
     <view class="form-group">
       <view class="form-label">金额（元）</view>
-      <input class="form-input" type="digit" placeholder="0.00" value="{{amount}}" bindinput="onAmountInput"/>
+      <input class="form-input" type="digit" placeholder="0.00" value="{{amount}}" bindinput="onAmountInput" maxlength="12"/>
+      <view class="form-hint">最多保留两位小数</view>
     </view>
 
-    <!-- 选择付款人 -->
+    <!-- 选择分类 -->
     <view class="form-group">
-      <view class="form-label">付款人</view>
+      <view class="form-label">分类</view>
+      <view class="category-tags">
+        <view class="category-tag {{category === item.key ? 'cat-active' : ''}}"
+              wx:for="{{categories}}" wx:key="key"
+              data-key="{{item.key}}"
+              bindtap="onSelectCategory">{{item.label}}</view>
+      </view>
+      <input class="form-input" wx:if="{{category === 'other'}}"
+             placeholder="请输入自定义分类（最多10字）"
+             value="{{customCategory}}"
+             maxlength="10"
+             bindinput="onCustomCategoryInput"/>
+    </view>
+
+    <!-- 付款人 / 收款人 -->
+    <view class="form-group">
+      <view class="form-label">{{type === 'income' ? '收款人' : '付款人'}}</view>
       <view class="member-select">
         <view class="member-tag"
               wx:for="{{memberList}}" wx:key="openid"
@@ -28,9 +59,9 @@
       </view>
     </view>
 
-    <!-- 选择分摊成员 -->
+    <!-- 参与分摊成员 / 入账归属成员 -->
     <view class="form-group">
-      <view class="form-label">参与分摊成员</view>
+      <view class="form-label">{{type === 'income' ? '入账归属成员' : '参与分摊成员'}}</view>
       <view class="member-select">
         <view class="member-tag"
               wx:for="{{memberList}}" wx:key="openid"

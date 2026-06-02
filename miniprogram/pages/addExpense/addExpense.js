@@ -1,14 +1,24 @@
 // pages/addExpense/addExpense.js
+// 支持新增和编辑两种模式
+//  新增：/pages/addExpense/addExpense?tripId=xxx
+//  编辑：/pages/addExpense/addExpense?tripId=xxx&expenseId=yyy
 var tripService = require('../../services/tripService')
 var expenseService = require('../../services/expenseService')
+var categoryUtils = require('../../utils/expenseCategory')
 var app = getApp()
 
 Page({
   data: {
     tripId: '',
+    expenseId: '',
+    isEdit: false,
     title: '',
     amount: '',
     note: '',
+    type: 'expense',
+    category: 'food',
+    customCategory: '',
+    categories: categoryUtils.CATEGORIES,
     members: [],
     memberList: [],
     payerOpenid: '',
@@ -19,29 +29,69 @@ Page({
 
   onLoad: function (options) {
     if (options.tripId) {
-      this.setData({ tripId: options.tripId })
-      this.loadMembers()
+      var isEdit = !!(options.expenseId)
+      this.setData({
+        tripId: options.tripId,
+        expenseId: options.expenseId || '',
+        isEdit: isEdit
+      })
+      if (isEdit) {
+        this.loadExpenseDetail()
+      } else {
+        this.loadMembers()
+      }
     }
   },
 
-  loadMembers: function () {
+  // 编辑模式：加载账单详情并回显
+  loadExpenseDetail: function () {
+    var that = this
+    wx.showLoading({ title: '加载中...' })
+    expenseService.getExpenseDetail(this.data.tripId, this.data.expenseId).then(function (data) {
+      wx.hideLoading()
+      var exp = data.expense
+      // 先加载成员列表，再回显
+      that.loadMembers(function () {
+        that.setData({
+          title: exp.title || '',
+          amount: String(exp.amount || ''),
+          note: exp.note || '',
+          type: exp.type || 'expense',
+          category: exp.category || 'food',
+          customCategory: exp.customCategory || '',
+          payerOpenid: exp.payerOpenid || '',
+          participantOpenids: exp.participantOpenids || []
+        })
+        that.refreshMemberList()
+      })
+    }).catch(function (err) {
+      wx.hideLoading()
+      wx.showToast({ title: err.message || '加载失败', icon: 'none' })
+      setTimeout(function () { wx.navigateBack() }, 1500)
+    })
+  },
+
+  loadMembers: function (cb) {
     var that = this
     tripService.getTripDetail(this.data.tripId).then(function (data) {
       var members = data.members
       var myOpenid = app.globalData.openid
+      // 编辑模式下不覆盖已选中的付款人
+      var payer = that.data.isEdit ? (that.data.payerOpenid || myOpenid) : myOpenid
+      var participants = that.data.isEdit ? that.data.participantOpenids : members.map(function (m) { return m.openid })
       that.setData({
         members: members,
-        payerOpenid: myOpenid,
-        participantOpenids: members.map(function (m) { return m.openid })
+        payerOpenid: payer,
+        participantOpenids: participants
       })
       that.refreshMemberList()
+      if (cb) cb()
     }).catch(function (err) {
       console.error('[addExpense] 加载成员失败:', err)
-      wx.showToast({ title: '加载成员失败', icon: 'none' })
+      if (cb) cb()
     })
   },
 
-  // 刷新成员列表的展示标记
   refreshMemberList: function () {
     var that = this
     var payerOpenid = this.data.payerOpenid
@@ -59,7 +109,7 @@ Page({
       return {
         openid: m.openid,
         nickName: m.nickName,
-        avatarUrl: m.avatarUrl,
+        avatarUrl: m.avatarUrl || '',
         isCreator: m.isCreator,
         isPayer: isPayer,
         isParticipant: isParticipant,
@@ -69,29 +119,47 @@ Page({
 
     var splitHint = ''
     if (amount > 0 && count > 0) {
-      splitHint = '共 ' + count + ' 人，每人 ¥' + (amount / count).toFixed(2)
+      var prefix = this.data.type === 'income' ? '共 ' + count + ' 人归属，每人抵扣 ¥' : '共 ' + count + ' 人，每人 ¥'
+      splitHint = prefix + (amount / count).toFixed(2)
     }
 
-    this.setData({
-      memberList: list,
-      splitHint: splitHint
-    })
+    this.setData({ memberList: list, splitHint: splitHint })
   },
 
   onTitleInput: function (e) { this.setData({ title: e.detail.value }) },
   onAmountInput: function (e) {
-    this.setData({ amount: e.detail.value })
+    var val = e.detail.value
+    // 只允许数字和一个小数点
+    val = val.replace(/[^\d.]/g, '')
+    // 只保留第一个小数点
+    var dotIndex = val.indexOf('.')
+    if (dotIndex !== -1) {
+      val = val.substring(0, dotIndex + 1) + val.substring(dotIndex + 1).replace(/\./g, '')
+    }
+    // 最多两位小数
+    if (dotIndex !== -1 && val.length - dotIndex > 3) {
+      val = val.substring(0, dotIndex + 3)
+    }
+    this.setData({ amount: val })
     this.refreshMemberList()
   },
   onNoteInput: function (e) { this.setData({ note: e.detail.value }) },
 
-  // 选择付款人（单选）
+  onToggleType: function () {
+    this.setData({ type: this.data.type === 'income' ? 'expense' : 'income' })
+  },
+  onSelectCategory: function (e) {
+    this.setData({ category: e.currentTarget.dataset.key })
+  },
+  onCustomCategoryInput: function (e) {
+    this.setData({ customCategory: e.detail.value })
+  },
+
   onSelectPayer: function (e) {
     this.setData({ payerOpenid: e.currentTarget.dataset.openid })
     this.refreshMemberList()
   },
 
-  // 切换分摊成员（多选）
   onToggleParticipant: function (e) {
     var openid = e.currentTarget.dataset.openid
     var list = this.data.participantOpenids.slice()
@@ -125,23 +193,34 @@ Page({
     this.setData({ submitting: true })
     wx.showLoading({ title: '提交中...' })
 
-    expenseService.addExpense({
+    var payload = {
       tripId: this.data.tripId,
       title: this.data.title.trim(),
       amount: Number(this.data.amount),
       payerOpenid: this.data.payerOpenid,
       participantOpenids: this.data.participantOpenids,
-      note: this.data.note || ''
-    }).then(function () {
+      note: this.data.note || '',
+      type: this.data.type,
+      category: this.data.category,
+      customCategory: this.data.category === 'other' ? (this.data.customCategory || '').slice(0, 10) : ''
+    }
+
+    var promise
+    if (this.data.isEdit) {
+      payload.expenseId = this.data.expenseId
+      promise = expenseService.updateExpense(payload)
+    } else {
+      promise = expenseService.addExpense(payload)
+    }
+
+    promise.then(function () {
       wx.hideLoading()
-      wx.showToast({ title: '添加成功', icon: 'success' })
-      setTimeout(function () {
-        wx.navigateBack()
-      }, 1000)
+      wx.showToast({ title: that.data.isEdit ? '修改成功' : '添加成功', icon: 'success' })
+      setTimeout(function () { wx.navigateBack() }, 1000)
     }).catch(function (err) {
       wx.hideLoading()
       that.setData({ submitting: false })
-      wx.showToast({ title: err.message || '添加失败', icon: 'none' })
+      wx.showToast({ title: err.message || '提交失败', icon: 'none' })
     })
   }
 })

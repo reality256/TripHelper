@@ -90,13 +90,16 @@
 
       <!-- 账单列表 -->
       <view class="expense-list" wx:if="{{!expenseEmpty}}">
-        <view class="card expense-card" wx:for="{{expenses}}" wx:key="_id">
+        <view class="card expense-card expense-card-tap" wx:for="{{expenses}}" wx:key="_id" data-id="{{item._id}}" bindtap="onTapExpense">
           <view class="expense-header">
-            <text class="expense-title">{{item.title}}</text>
-            <text class="expense-amount">¥{{item.amountText}}</text>
+            <view class="expense-title-row">
+              <text class="expense-cat-tag" wx:if="{{item.categoryLabel}}">{{item.categoryLabel}}</text>
+              <text class="expense-title">{{item.title}}</text>
+            </view>
+            <text class="expense-amount {{item.expenseType === 'income' ? 'income-amount' : ''}}">{{item.expenseType === 'income' ? '-' : ''}}¥{{item.amountText}}</text>
           </view>
           <view class="expense-meta">
-            <text>{{item.payerName}} 支付 · {{item.participantCount}} 人分摊</text>
+            <text>{{item.payerLabel}}：{{item.payerName}} · {{item.participantCount}} 人{{item.expenseType === 'income' ? '归属' : '分摊'}}</text>
           </view>
           <view class="expense-meta expense-date">{{item.dateText}}</view>
           <view class="expense-note" wx:if="{{item.note}}">{{item.note}}</view>
@@ -171,6 +174,14 @@
     <!-- ===== 待办 tab ===== -->
     <block wx:if="{{activeTab === 'todos'}}">
 
+      <!-- 筛选按钮 -->
+      <view class="todo-filter-bar">
+        <view class="todo-filter-item {{todoFilter === item.key ? 'tf-active' : ''}}"
+              wx:for="{{todoFilterOptions}}" wx:key="key"
+              data-key="{{item.key}}"
+              bindtap="onTodoFilterChange">{{item.label}}</view>
+      </view>
+
       <!-- 加载中 -->
       <view class="loading-state" wx:if="{{todosLoading}}">
         <view class="loading-spinner"></view>
@@ -187,7 +198,10 @@
       <!-- 空状态 -->
       <view class="empty-state" wx:elif="{{todosLoaded && todoEmpty}}">
         <view class="empty-state-icon">✅</view>
-        <view class="empty-state-text">暂无待办事项</view>
+        <view class="empty-state-text" wx:if="{{todoFilter === 'mine'}}">暂无你负责的待办</view>
+        <view class="empty-state-text" wx:elif="{{todoFilter === 'unfinished'}}">所有待办已完成</view>
+        <view class="empty-state-text" wx:elif="{{todoFilter === 'finished'}}">暂无已完成的待办</view>
+        <view class="empty-state-text" wx:else>暂无待办事项</view>
       </view>
 
       <!-- 待办列表 -->
@@ -246,6 +260,7 @@
           <text class="member-badge" wx:if="{{item.isCreator}}">创建者</text>
           <text class="member-me" wx:if="{{item.openid === myOpenid}}">我</text>
         </view>
+        <text class="member-remove-btn" wx:if="{{trip.creatorOpenid === myOpenid && item.openid !== myOpenid}}" data-openid="{{item.openid}}" catchtap="onRemoveMember">移除</text>
       </view>
 
       <!-- 旅行管理 -->

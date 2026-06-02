@@ -6,6 +6,7 @@ var expenseService = require('../../services/expenseService')
 var settlementService = require('../../services/settlementService')
 var todoService = require('../../services/todoService')
 var userService = require('../../services/userService')
+var categoryUtils = require('../../utils/expenseCategory')
 
 Page({
   data: {
@@ -60,6 +61,14 @@ Page({
     todosLoading: false,
     todosLoaded: false,
     todosError: '',
+    todosFull: [],
+    todoFilter: 'mine',
+    todoFilterOptions: [
+      { key: 'mine', label: '我的' },
+      { key: 'all', label: '全部' },
+      { key: 'unfinished', label: '未完成' },
+      { key: 'finished', label: '已完成' }
+    ],
 
     // 设置模块
     myTrips: [],
@@ -294,7 +303,17 @@ Page({
     this.setData({ expensesLoading: true, expensesError: '' })
 
     expenseService.getExpenses(this.data.tripId).then(function (data) {
-      var expenses = (data.expenses || []).map(function (e) {
+      var rawExpenses = data.expenses || []
+
+      // 从原始数据计算总花费（防字段映射问题）
+      var rawTotal = 0
+      for (var i = 0; i < rawExpenses.length; i++) {
+        var rawAmt = Number(rawExpenses[i].amount) || 0
+        rawTotal += (rawExpenses[i].type === 'income') ? -rawAmt : rawAmt
+      }
+      var displayTotal = rawTotal > 0 ? rawTotal : 0
+
+      var expenses = rawExpenses.map(function (e) {
         var dateStr = ''
         if (e.createdAt) {
           var d = new Date(e.createdAt)
@@ -307,17 +326,22 @@ Page({
         return {
           _id: e._id,
           title: e.title,
+          amount: e.amount || 0,
           amountText: (e.amount || 0).toFixed(2),
           payerName: memberMap[e.payerOpenid] || '未知',
+          payerLabel: e.type === 'income' ? '收款人' : '付款人',
           participantCount: e.participantOpenids ? e.participantOpenids.length : 0,
           note: e.note,
-          dateText: dateStr
+          dateText: dateStr,
+          createdBy: e.createdBy || '',
+          categoryLabel: categoryUtils.getCategoryLabel(e),
+          expenseType: e.type || 'expense'
         }
       })
 
       that.setData({
         expenses: expenses,
-        expenseTotal: (data.totalAmount || 0).toFixed(2),
+        expenseTotal: displayTotal.toFixed(2),
         expenseEmpty: expenses.length === 0,
         expensesLoading: false,
         expensesLoaded: true,
@@ -387,6 +411,11 @@ Page({
     wx.navigateTo({ url: '/pages/addExpense/addExpense?tripId=' + this.data.tripId })
   },
 
+  onTapExpense: function (e) {
+    var expenseId = e.currentTarget.dataset.id
+    wx.navigateTo({ url: '/pages/expenseDetail/expenseDetail?tripId=' + this.data.tripId + '&expenseId=' + expenseId })
+  },
+
   // ===== 待办 =====
   loadTodos: function () {
     var that = this
@@ -411,18 +440,19 @@ Page({
         return {
           _id: t._id, title: t.title, note: t.note,
           completed: t.completed,
+          assigneeOpenids: t.assigneeOpenids || [],
           assigneeText: names.join('、'),
           dateText: dateStr,
           doneTime: doneTime
         }
       })
       that.setData({
-        todos: todos,
-        todoEmpty: todos.length === 0,
+        todosFull: todos,
         todosLoading: false,
         todosLoaded: true,
         todosError: ''
       })
+      that.applyTodoFilter()
     }).catch(function (err) {
       console.error('[tripWorkspace] 待办加载失败:', err)
       that.setData({
@@ -435,6 +465,34 @@ Page({
 
   retryLoadTodos: function () {
     this.loadTodos()
+  },
+
+  onTodoFilterChange: function (e) {
+    var key = e.currentTarget.dataset.key
+    if (key === this.data.todoFilter) return
+    this.setData({ todoFilter: key })
+    this.applyTodoFilter()
+  },
+
+  applyTodoFilter: function () {
+    var full = this.data.todosFull || []
+    var filter = this.data.todoFilter
+    var myOpenid = this.data.myOpenid || ''
+    var filtered
+
+    if (filter === 'mine') {
+      filtered = full.filter(function (t) {
+        return (t.assigneeOpenids || []).indexOf(myOpenid) !== -1
+      })
+    } else if (filter === 'unfinished') {
+      filtered = full.filter(function (t) { return !t.completed })
+    } else if (filter === 'finished') {
+      filtered = full.filter(function (t) { return t.completed })
+    } else {
+      filtered = full.slice()
+    }
+
+    this.setData({ todos: filtered, todoEmpty: filtered.length === 0 })
   },
 
   toggleTodo: function (e) {
@@ -500,6 +558,31 @@ Page({
   switchToTrip: function (e) {
     var tripId = e.currentTarget.dataset.id
     wx.redirectTo({ url: '/pages/tripWorkspace/tripWorkspace?tripId=' + tripId })
+  },
+
+  // ===== 创建者移除成员 =====
+
+  onRemoveMember: function (e) {
+    var that = this
+    var targetOpenid = e.currentTarget.dataset.openid
+    wx.showModal({
+      title: '确认移除该成员？',
+      content: '移除后，该成员将无法继续访问本次旅行。其历史账单不会被删除，仍可能参与结算。',
+      confirmText: '确认移除',
+      confirmColor: '#E74C3C',
+      success: function (res) {
+        if (!res.confirm) return
+        wx.showLoading({ title: '移除中...' })
+        tripService.removeMember(that.data.tripId, targetOpenid).then(function () {
+          wx.hideLoading()
+          wx.showToast({ title: '已移除', icon: 'success' })
+          that.loadTrip()
+        }).catch(function (err) {
+          wx.hideLoading()
+          wx.showToast({ title: err.message || '移除失败', icon: 'none' })
+        })
+      }
+    })
   },
 
   // ===== 旅行管理：解散 / 退出 =====
@@ -643,7 +726,6 @@ Page({
         console.error('[tripWorkspace] 头像上传失败:', err)
         wx.hideLoading()
         wx.showToast({ title: '头像上传失败，请重试', icon: 'none' })
-        that.setData({ submitting: false })
       })
     } else {
       // 无头像或已是云端 fileID → 直接保存

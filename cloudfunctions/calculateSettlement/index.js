@@ -42,30 +42,40 @@ exports.main = async (event) => {
       const expenseRes = await db.collection('expenses')
         .where({ tripId })
         .get()
-      expenses = expenseRes.data
+      // 排除已软删除的账单（兼容旧数据无 deleted 字段）
+      expenses = expenseRes.data.filter(function (e) { return !e.deleted })
     } catch (e) {
       // 集合不存在则无账单
     }
 
-    // 3. 查询成员信息
-    const memberOpenids = trip.memberOpenids || []
+    // 3. 收集所有涉及结算的用户（当前成员 + 历史账单中的退出的成员）
+    var settlementOpenids = {}
+    var memberOpenids = trip.memberOpenids || []
+    memberOpenids.forEach(function (oid) { settlementOpenids[oid] = true })
+    expenses.forEach(function (exp) {
+      if (exp.payerOpenid) settlementOpenids[exp.payerOpenid] = true
+      ;(exp.participantOpenids || []).forEach(function (oid) { settlementOpenids[oid] = true })
+    })
+    var allOpenids = Object.keys(settlementOpenids)
+
+    // 4. 查询用户信息
     let userMap = {}
-    if (memberOpenids.length > 0) {
+    if (allOpenids.length > 0) {
       const userRes = await db.collection('users')
-        .where({ openid: db.command.in(memberOpenids) })
+        .where({ openid: db.command.in(allOpenids) })
         .get()
       userRes.data.forEach(function (u) {
         userMap[u.openid] = u
       })
     }
 
-    // 4. 初始化每个成员的 paid / shouldPay（单位：分）
+    // 5. 初始化余额表
     let balanceMap = {}
-    memberOpenids.forEach(function (oid) {
+    allOpenids.forEach(function (oid) {
       balanceMap[oid] = { paid: 0, shouldPay: 0 }
     })
 
-    // 5. 遍历账单计算
+    // 6. 遍历账单计算
     expenses.forEach(function (exp) {
       var amountInCents = Math.round(Number(exp.amount) * 100)
       var participants = exp.participantOpenids || []
@@ -73,33 +83,37 @@ exports.main = async (event) => {
 
       if (participants.length === 0) return
 
-      // 付款人实付增加
-      if (balanceMap[payer]) {
-        balanceMap[payer].paid += amountInCents
-      }
+      var isIncome = exp.type === 'income'
+      // 保证历史账单中已退出成员也参与结算
+      if (payer && !balanceMap[payer]) balanceMap[payer] = { paid: 0, shouldPay: 0 }
+      participants.forEach(function (oid) {
+        if (oid && !balanceMap[oid]) balanceMap[oid] = { paid: 0, shouldPay: 0 }
+      })
 
-      // 每个参与人应付增加（平均分摊）
+      // 付款人实付：支出增加，入账减少
+      var paidDelta = isIncome ? -amountInCents : amountInCents
+      balanceMap[payer].paid += paidDelta
+
+      // 每个参与人应付：支出增加，入账减少
       var perPersonCents = Math.floor(amountInCents / participants.length)
       var remainder = amountInCents - perPersonCents * participants.length
+      var shouldPayDelta = isIncome ? -1 : 1
 
       participants.forEach(function (oid, idx) {
-        if (balanceMap[oid]) {
-          // 前 remainder 个人多分担 1 分，处理除不尽的情况
-          balanceMap[oid].shouldPay += perPersonCents + (idx < remainder ? 1 : 0)
-        }
+        balanceMap[oid].shouldPay += (perPersonCents + (idx < remainder ? 1 : 0)) * shouldPayDelta
       })
     })
 
-    // 6. 计算净额（分）
+    // 7. 计算净额（分）
     // net > 0 = 应收，net < 0 = 应付
     let balances = []
-    memberOpenids.forEach(function (oid) {
+    allOpenids.forEach(function (oid) {
       var b = balanceMap[oid]
       var net = b.paid - b.shouldPay
       var user = userMap[oid] || {}
       balances.push({
         openid: oid,
-        nickName: user.nickName || '未知用户',
+        nickName: user.nickName || ('旅友' + oid.slice(-4).toUpperCase()),
         avatarUrl: user.avatarUrl || '',
         paid: b.paid / 100,
         shouldPay: b.shouldPay / 100,
@@ -107,7 +121,7 @@ exports.main = async (event) => {
       })
     })
 
-    // 7. 贪心算法生成最简转账方案
+    // 8. 贪心算法生成最简转账方案
     // 应收款人（net > 0，按 net 降序）
     var creditors = balances.filter(function (b) { return b.net > 0 })
                             .sort(function (a, b) { return b.net - a.net })

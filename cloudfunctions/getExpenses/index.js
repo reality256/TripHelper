@@ -43,7 +43,8 @@ exports.main = async (event) => {
         .where({ tripId })
         .orderBy('createdAt', 'desc')
         .get()
-      expenses = expenseRes.data
+      // 排除已软删除的账单（兼容旧数据无 deleted 字段）
+      expenses = expenseRes.data.filter(function (e) { return !e.deleted })
       totalAmount = expenses.reduce(function (sum, e) {
         return sum + (e.amount || 0)
       }, 0)

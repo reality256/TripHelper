@@ -222,6 +222,24 @@ page {
   margin-bottom: 6rpx;
 }
 
+.expense-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-cat-tag {
+  font-size: 20rpx;
+  color: var(--primary);
+  background: #E8F5F3;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .expense-title {
   font-size: 28rpx;
   font-weight: 500;
@@ -234,6 +252,10 @@ page {
   color: var(--primary);
   flex-shrink: 0;
   margin-left: 24rpx;
+}
+
+.expense-amount.income-amount {
+  color: #E74C3C;
 }
 
 .expense-meta {
@@ -251,6 +273,11 @@ page {
   margin-top: 6rpx;
   padding-top: 10rpx;
   border-top: 1rpx solid #F5F5F5;
+}
+
+/* 账单卡片可点击进入详情 */
+.expense-card-tap:active {
+  background: #F9F9F9;
 }
 
 /* 结算 */
@@ -321,6 +348,29 @@ page {
 .net-negative { color: var(--danger); }
 
 /* ===== 待办 tab ===== */
+
+.todo-filter-bar {
+  display: flex;
+  padding: 0 24rpx 16rpx;
+  gap: 12rpx;
+}
+
+.todo-filter-item {
+  padding: 12rpx 26rpx;
+  font-size: 24rpx;
+  color: #999;
+  background: #FFF;
+  border-radius: 28rpx;
+  border: 2rpx solid #F0F0F0;
+}
+
+.todo-filter-item.tf-active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: #E8F5F3;
+  font-weight: 500;
+}
+
 .todo-section {
   padding: 0 24rpx;
 }
@@ -471,6 +521,16 @@ page {
   padding: 2rpx 10rpx;
   margin-left: 8rpx;
 }
+
+.member-remove-btn {
+  font-size: 22rpx;
+  color: #E74C3C;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 6rpx 14rpx;
+}
+
+.member-remove-btn:active { opacity: 0.6; }
 
 /* 邀请码 */
 .invite-card {

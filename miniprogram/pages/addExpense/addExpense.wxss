@@ -8,6 +8,42 @@
   margin-bottom: 56rpx;
 }
 
+.form-hint {
+  font-size: 22rpx;
+  color: #CCC;
+  margin-top: 6rpx;
+}
+
+/* 类型切换 */
+.type-switch {
+  display: flex;
+  gap: 0;
+  border-radius: 14rpx;
+  overflow: hidden;
+  border: 2rpx solid #E8E8E8;
+}
+
+.type-tab {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #999;
+  background: #F5F7F6;
+}
+
+.type-tab:active { background: #E8ECEA; }
+
+.type-active {
+  background: #FFF;
+  color: #E67E22;
+  font-weight: 600;
+}
+
+.type-active.type-income {
+  color: #27AE60;
+}
+
 /* 成员选择 */
 .member-select {
   display: flex;
@@ -64,4 +100,31 @@
   margin-top: 16rpx;
   font-size: 24rpx;
   color: #999;
+}
+
+/* 分类标签 */
+.category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.category-tag {
+  padding: 14rpx 28rpx;
+  background: #F5F7F6;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  color: #666;
+  border: 2rpx solid transparent;
+}
+
+.category-tag:active {
+  background: #E8ECEA;
+}
+
+.category-tag.cat-active {
+  background: #E8F5F3;
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 500;
 }

@@ -3,7 +3,7 @@
 .page-title { margin-bottom: 12rpx; }
 .page-subtitle { margin-bottom: 56rpx; }
 
-/* 输入区域容器 */
+/* 输入区域容器：点击时聚焦隐藏 input */
 .code-area {
   position: relative;
   display: flex;
@@ -11,16 +11,14 @@
   margin-bottom: 56rpx;
 }
 
-/* 透明 input 覆盖在格子上层，接收触摸和键盘 */
+/* 隐藏 input：移出可视区域，不可见但可接收输入 */
 .code-input {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  left: -9999rpx;
+  top: -9999rpx;
+  width: 1rpx;
+  height: 1rpx;
   opacity: 0;
-  z-index: 2;
-  color: transparent;
 }
 
 /* 展示格子层 */

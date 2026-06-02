@@ -5,7 +5,27 @@ Page({
   data: {
     codeChars: ['', '', '', '', '', ''],
     codeComplete: false,
-    submitting: false
+    submitting: false,
+    rawValue: '',
+    inputFocus: false
+  },
+
+  onReady: function () {
+    // 页面渲染完成后自动聚焦
+    var that = this
+    setTimeout(function () {
+      that.setData({ inputFocus: true })
+    }, 300)
+  },
+
+  // 点击展示区时聚焦隐藏 input
+  focusInput: function () {
+    this.setData({ inputFocus: true })
+  },
+
+  // input 失去焦点时重置标记，允许再次点击聚焦
+  onInputBlur: function () {
+    this.setData({ inputFocus: false })
   },
 
   onCodeInput: function (e) {
@@ -16,6 +36,7 @@ Page({
       chars.push(cleaned[i] || '')
     }
     this.setData({
+      rawValue: cleaned,
       codeChars: chars,
       codeComplete: cleaned.length === 6
     })

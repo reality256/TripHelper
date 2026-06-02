@@ -1,0 +1,53 @@
+<!--pages/expenseDetail/expenseDetail.wxml-->
+<view class="loading" wx:if="{{loading}}"><text>加载中...</text></view>
+
+<view class="container" wx:if="{{!loading && expense}}">
+
+  <!-- 右上角更多操作 -->
+  <view class="top-actions" wx:if="{{canManage}}">
+    <text class="more-btn" bindtap="onMoreAction">··· 更多</text>
+  </view>
+
+  <!-- 金额 -->
+  <view class="amount-block">
+    <text class="big-amount {{isIncome ? 'income-big' : ''}}">{{isIncome ? '-' : ''}}¥{{amountText}}</text>
+    <view class="type-badge" wx:if="{{typeText}}">{{typeText}}</view>
+  </view>
+
+  <!-- 基本信息 -->
+  <view class="info-card">
+    <view class="info-row" wx:if="{{categoryLabel}}">
+      <text class="info-label">分类</text>
+      <text class="info-value">{{categoryLabel}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">标题</text>
+      <text class="info-value">{{expense.title}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">{{payerLabel}}</text>
+      <text class="info-value">{{payerName}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">{{participantLabel}}</text>
+      <text class="info-value">{{participantNames}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">分摊人数</text>
+      <text class="info-value">{{expense.participantOpenids.length}} 人</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">{{isIncome ? '每人抵扣' : '人均'}}</text>
+      <text class="info-value">¥{{perPerson}}</text>
+    </view>
+    <view class="info-row" wx:if="{{expense.note}}">
+      <text class="info-label">备注</text>
+      <text class="info-value note-value">{{expense.note}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">创建时间</text>
+      <text class="info-value">{{dateText}}</text>
+    </view>
+  </view>
+
+</view>

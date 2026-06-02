@@ -3,14 +3,17 @@
   <view class="page-title">加入旅行</view>
   <view class="page-subtitle">请输入好友分享的 6 位邀请码</view>
 
-  <!-- 输入区：透明 input 叠加在展示格上 -->
-  <view class="code-area">
+  <!-- 输入区：展示格 + 隐藏 input -->
+  <view class="code-area" bindtap="focusInput">
+
+    <!-- 隐藏的真实 input，移出可视区域，只接收输入不显示光标 -->
     <input class="code-input"
            maxlength="{{6}}"
-           adjust-position="{{true}}"
+           focus="{{inputFocus}}"
            bindinput="onCodeInput"
-           focus="{{true}}"
-           cursor-spacing="{{200}}"/>
+           bindblur="onInputBlur"
+           value="{{rawValue}}"
+           adjust-position="{{false}}"/>
 
     <view class="code-box-row">
       <view class="code-box {{codeChars[0] ? 'filled' : 'active'}}">

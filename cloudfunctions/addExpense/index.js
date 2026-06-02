@@ -16,7 +16,7 @@ exports.main = async (event) => {
     return { success: false, data: null, message: '无法获取用户身份' }
   }
 
-  const { tripId, title, amount, payerOpenid, participantOpenids, note } = event
+  const { tripId, title, amount, payerOpenid, participantOpenids, note, category, customCategory, type } = event
 
   // 服务端校验
   if (!tripId) {
@@ -25,8 +25,13 @@ exports.main = async (event) => {
   if (!title || !title.trim()) {
     return { success: false, data: null, message: '请输入账单标题' }
   }
-  if (!amount || Number(amount) <= 0) {
-    return { success: false, data: null, message: '金额必须大于 0' }
+  var numAmount = Number(amount)
+  if (!amount || isNaN(numAmount) || numAmount <= 0) {
+    return { success: false, data: null, message: '金额必须为正数' }
+  }
+  // 校验最多两位小数
+  if (!/^\d+(\.\d{1,2})?$/.test(String(amount))) {
+    return { success: false, data: null, message: '金额最多保留两位小数' }
   }
   if (!payerOpenid) {
     return { success: false, data: null, message: '请选择付款人' }
@@ -64,11 +69,14 @@ exports.main = async (event) => {
     const expense = {
       tripId,
       title: title.trim(),
-      amount: Number(amount),
+      amount: Math.round(numAmount * 100) / 100,
       payerOpenid,
       participantOpenids,
       splitType: 'equal',
+      type: type === 'income' ? 'income' : 'expense',
       note: note || '',
+      category: category || 'food',
+      customCategory: (category === 'other' ? (customCategory || '') : ''),
       createdBy: openid,
       createdAt: new Date(),
       updatedAt: new Date()
