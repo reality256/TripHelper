@@ -1,5 +1,5 @@
 // cloudfunctions/getMyTrips/index.js
-// 获取当前用户加入的所有旅行，按创建时间倒序排列
+// 获取当前用户加入的所有旅行，按更新时间倒序排列（最近优先）
 const cloud = require('wx-server-sdk')
 
 cloud.init({
@@ -21,12 +21,12 @@ exports.main = async () => {
   }
 
   try {
-    // 查询 memberOpenids 包含当前用户的旅行
+    // 查询 memberOpenids 包含当前用户的旅行，按 updatedAt 倒序
     const res = await db.collection('trips')
       .where({
         memberOpenids: openid
       })
-      .orderBy('createdAt', 'desc')
+      .orderBy('updatedAt', 'desc')
       .get()
 
     console.log('[getMyTrips] 查询成功, 数量:', res.data.length)

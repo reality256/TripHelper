@@ -3,18 +3,30 @@ var tripService = require('../../services/tripService')
 
 Page({
   data: {
-    inviteCode: '',
+    codeChars: ['', '', '', '', '', ''],
+    codeComplete: false,
     submitting: false
   },
 
-  onInviteCodeInput: function (e) { this.setData({ inviteCode: e.detail.value }) },
+  onCodeInput: function (e) {
+    var raw = String(e.detail.value || '')
+    var cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+    var chars = []
+    for (var i = 0; i < 6; i++) {
+      chars.push(cleaned[i] || '')
+    }
+    this.setData({
+      codeChars: chars,
+      codeComplete: cleaned.length === 6
+    })
+  },
 
   onSubmit: function () {
     var that = this
-    var code = this.data.inviteCode
+    var code = this.data.codeChars.join('')
 
-    if (!code || !code.trim()) {
-      wx.showToast({ title: '请输入邀请码', icon: 'none' })
+    if (code.length < 6) {
+      wx.showToast({ title: '请输入 6 位邀请码', icon: 'none' })
       return
     }
 
@@ -22,11 +34,11 @@ Page({
     this.setData({ submitting: true })
     wx.showLoading({ title: '加入中...' })
 
-    tripService.joinTrip(code.trim()).then(function (data) {
+    tripService.joinTrip(code).then(function (data) {
       wx.hideLoading()
       wx.showToast({ title: '加入成功', icon: 'success' })
       setTimeout(function () {
-        wx.redirectTo({ url: '/pages/tripDetail/tripDetail?tripId=' + data.tripId })
+        wx.redirectTo({ url: '/pages/tripWorkspace/tripWorkspace?tripId=' + data.tripId })
       }, 1000)
     }).catch(function (err) {
       wx.hideLoading()

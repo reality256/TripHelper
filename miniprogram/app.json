@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/tripWorkspace/tripWorkspace",
     "pages/createTrip/createTrip",
     "pages/joinTrip/joinTrip",
     "pages/tripDetail/tripDetail",
@@ -8,6 +9,7 @@
     "pages/addItinerary/addItinerary",
     "pages/expenses/expenses",
     "pages/addExpense/addExpense",
+    "pages/addTodo/addTodo",
     "pages/settlement/settlement",
     "pages/members/members"
   ],

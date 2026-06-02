@@ -1,12 +1,38 @@
 <!--pages/joinTrip/joinTrip.wxml-->
 <view class="container">
   <view class="page-title">加入旅行</view>
-  <view class="page-subtitle">输入朋友分享的邀请码，加入他们的旅行</view>
-  <view class="card">
-    <view class="form-group">
-      <view class="form-label">邀请码</view>
-      <input class="form-input" placeholder="请输入邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="20"/>
+  <view class="page-subtitle">请输入好友分享的 6 位邀请码</view>
+
+  <!-- 输入区：透明 input 叠加在展示格上 -->
+  <view class="code-area">
+    <input class="code-input"
+           maxlength="{{6}}"
+           adjust-position="{{true}}"
+           bindinput="onCodeInput"
+           focus="{{true}}"
+           cursor-spacing="{{200}}"/>
+
+    <view class="code-box-row">
+      <view class="code-box {{codeChars[0] ? 'filled' : 'active'}}">
+        <text>{{codeChars[0]}}</text>
+      </view>
+      <view class="code-box {{codeChars[1] ? 'filled' : ''}} {{!codeChars[1] && codeChars[0] ? 'active' : ''}}">
+        <text>{{codeChars[1]}}</text>
+      </view>
+      <view class="code-box {{codeChars[2] ? 'filled' : ''}} {{!codeChars[2] && codeChars[1] ? 'active' : ''}}">
+        <text>{{codeChars[2]}}</text>
+      </view>
+      <view class="code-box {{codeChars[3] ? 'filled' : ''}} {{!codeChars[3] && codeChars[2] ? 'active' : ''}}">
+        <text>{{codeChars[3]}}</text>
+      </view>
+      <view class="code-box {{codeChars[4] ? 'filled' : ''}} {{!codeChars[4] && codeChars[3] ? 'active' : ''}}">
+        <text>{{codeChars[4]}}</text>
+      </view>
+      <view class="code-box {{codeChars[5] ? 'filled' : ''}} {{!codeChars[5] && codeChars[4] ? 'active' : ''}}">
+        <text>{{codeChars[5]}}</text>
+      </view>
     </view>
   </view>
-  <view class="btn-primary" bindtap="onSubmit">加入旅行</view>
+
+  <view class="btn-primary {{codeComplete ? '' : 'btn-disabled'}}" bindtap="onSubmit">加入旅行</view>
 </view>

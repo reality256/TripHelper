@@ -1,0 +1,200 @@
+<!--pages/tripWorkspace/tripWorkspace.wxml-->
+<view class="workspace" wx:if="{{!loading && trip}}">
+
+  <!-- 顶部旅行信息 -->
+  <view class="top-bar">
+    <view class="top-name">{{trip.name}}</view>
+    <view class="top-meta">📍 {{trip.destination}} · 📅 {{trip.startDate}} - {{trip.endDate}} · {{memberCount}}人</view>
+  </view>
+
+  <!-- 内容区 -->
+  <view class="tab-content">
+
+    <!-- ===== 行程 tab ===== -->
+    <block wx:if="{{activeTab === 'itinerary'}}">
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{itineraryEmpty}}">
+        <view class="empty-state-icon">📋</view>
+        <view class="empty-state-text">暂无行程安排</view>
+      </view>
+
+      <!-- 行程列表：按日期分组 -->
+      <view class="itin-list" wx:if="{{!itineraryEmpty}}">
+        <view class="itin-group" wx:for="{{itineraryGroups}}" wx:key="date">
+          <view class="itin-date">{{item.date}}</view>
+          <view class="card itin-card" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
+            <view class="itin-header">
+              <text class="itin-title">{{row.title}}</text>
+              <text class="itin-del {{itineraryManaging ? '' : 'itin-del-hidden'}}" data-id="{{row._id}}" bindtap="deleteItinerary">✕</text>
+            </view>
+            <view class="itin-row" wx:if="{{row.timeText}}">🕐 {{row.timeText}}</view>
+            <view class="itin-row" wx:if="{{row.location}}">📍 {{row.location}}</view>
+            <view class="itin-note" wx:if="{{row.note}}">{{row.note}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作区 -->
+      <view class="tab-action" wx:if="{{!itineraryManaging}}">
+        <view class="btn-primary" bindtap="toggleItineraryManage">管理行程</view>
+      </view>
+      <view class="tab-action tab-action-row" wx:if="{{itineraryManaging}}">
+        <view class="btn-primary btn-half" bindtap="goAddItinerary">添加行程</view>
+        <view class="btn-secondary btn-half" bindtap="toggleItineraryManage">完成</view>
+      </view>
+    </block>
+
+    <!-- ===== 账单 tab ===== -->
+    <block wx:if="{{activeTab === 'expenses'}}">
+
+      <!-- 总金额 -->
+      <view class="card total-card">
+        <view class="total-label">总消费</view>
+        <view class="total-amount">¥{{expenseTotal}}</view>
+      </view>
+
+      <!-- 账单列表 -->
+      <view class="expense-list" wx:if="{{!expenseEmpty}}">
+        <view class="card expense-card" wx:for="{{expenses}}" wx:key="_id">
+          <view class="expense-header">
+            <text class="expense-title">{{item.title}}</text>
+            <text class="expense-amount">¥{{item.amountText}}</text>
+          </view>
+          <view class="expense-meta">
+            <text>{{item.payerName}} 支付 · {{item.participantCount}} 人分摊</text>
+          </view>
+          <view class="expense-meta expense-date">{{item.dateText}}</view>
+          <view class="expense-note" wx:if="{{item.note}}">{{item.note}}</view>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{expenseEmpty}}">
+        <view class="empty-state-icon">💰</view>
+        <view class="empty-state-text">还没有账单记录</view>
+      </view>
+
+      <!-- 结算结果 -->
+      <view class="settle-section" wx:if="{{hasSettlement}}">
+        <view class="section-title">结算结果</view>
+
+        <!-- 每人收支 -->
+        <view class="card settle-card" wx:for="{{balances}}" wx:key="nickName">
+          <view class="settle-top">
+            <text class="settle-name">{{item.nickName}}</text>
+            <text class="settle-net {{item.netClass}}">{{item.netText}}</text>
+          </view>
+          <view class="settle-detail">
+            <text>实付 ¥{{item.paidText}} · 应付 ¥{{item.shouldPayText}}</text>
+          </view>
+        </view>
+
+        <!-- 转账方案 -->
+        <view class="section-title" wx:if="{{transfers.length > 0}}">建议转账</view>
+        <view class="card settle-card" wx:if="{{transfers.length === 0}}">
+          <text class="settle-done">🎉 账目已结清</text>
+        </view>
+        <view class="card transfer-card" wx:for="{{transfers}}" wx:key="index">
+          <text class="tf-from">{{item.fromName}}</text>
+          <text class="tf-arrow"> → </text>
+          <text class="tf-to">{{item.toName}}</text>
+          <text class="tf-amount">¥{{item.amountText}}</text>
+        </view>
+      </view>
+
+      <!-- 添加账单 -->
+      <view class="tab-action">
+        <view class="btn-primary" bindtap="goAddExpense">添加账单</view>
+      </view>
+    </block>
+
+    <!-- ===== 待办 tab ===== -->
+    <block wx:if="{{activeTab === 'todos'}}">
+
+      <view class="empty-state" wx:if="{{todoEmpty}}">
+        <view class="empty-state-icon">✅</view>
+        <view class="empty-state-text">暂无待办事项</view>
+      </view>
+
+      <!-- 未完成 -->
+      <view class="todo-section" wx:if="{{!todoEmpty}}">
+        <block wx:for="{{todos}}" wx:key="_id">
+          <view class="card todo-card {{item.completed ? 'todo-done' : ''}}">
+            <view class="todo-header">
+              <view class="todo-check" data-id="{{item._id}}" data-completed="{{item.completed}}" bindtap="toggleTodo">
+                <text wx:if="{{item.completed}}">✓</text>
+              </view>
+              <text class="todo-title">{{item.title}}</text>
+              <text class="todo-del {{todoManaging ? '' : 'itin-del-hidden'}}" data-id="{{item._id}}" bindtap="deleteTodo">✕</text>
+            </view>
+            <view class="todo-meta">👤 {{item.assigneeText}}</view>
+            <view class="todo-meta" wx:if="{{item.dateText}}">📅 {{item.dateText}}</view>
+            <view class="todo-meta todo-done-time" wx:if="{{item.completed && item.doneTime}}">✅ 完成于 {{item.doneTime}}</view>
+            <view class="todo-note" wx:if="{{item.note}}">{{item.note}}</view>
+          </view>
+        </block>
+      </view>
+
+      <view class="tab-action" wx:if="{{!todoManaging}}">
+        <view class="btn-primary" bindtap="toggleTodoManage">管理待办</view>
+      </view>
+      <view class="tab-action tab-action-row" wx:if="{{todoManaging}}">
+        <view class="btn-primary btn-half" bindtap="goAddTodo">添加待办</view>
+        <view class="btn-secondary btn-half" bindtap="toggleTodoManage">完成</view>
+      </view>
+    </block>
+
+    <!-- ===== 设置 tab ===== -->
+    <view class="settings-tab" wx:if="{{activeTab === 'settings'}}">
+
+      <!-- 成员列表 -->
+      <view class="set-section-title">旅行成员</view>
+      <view class="card member-card" wx:for="{{members}}" wx:key="openid">
+        <view class="member-avatar-placeholder">{{item.firstChar}}</view>
+        <view class="member-info">
+          <text class="member-name">{{item.nickName}}</text>
+          <text class="member-badge" wx:if="{{item.isCreator}}">创建者</text>
+          <text class="member-me" wx:if="{{item.openid === myOpenid}}">我</text>
+        </view>
+      </view>
+
+      <!-- 邀请码 -->
+      <view class="set-section-title">邀请成员</view>
+      <view class="card invite-card" bindtap="copyInviteCode">
+        <text class="invite-code-text">{{trip.inviteCode}}</text>
+        <text class="invite-hint">点击复制邀请码</text>
+      </view>
+
+      <!-- 切换旅行 -->
+      <view class="set-section-title" wx:if="{{myTrips.length > 0}}">切换旅行</view>
+      <view class="card switch-card" wx:for="{{myTrips}}" wx:key="_id" data-id="{{item._id}}" bindtap="switchToTrip">
+        <text class="switch-name">{{item.name}}</text>
+        <text class="switch-detail">{{item.destination}} · {{item.startDate}} 至 {{item.endDate}}</text>
+      </view>
+
+      <!-- 创建 / 加入 -->
+      <view class="set-section-title">更多</view>
+      <view class="btn-secondary" style="margin-bottom:16rpx" bindtap="goCreateTrip">创建新旅行</view>
+      <view class="btn-secondary" bindtap="goJoinTrip">加入其他旅行</view>
+
+    </view>
+
+  </view>
+
+  <!-- 底部菜单栏 -->
+  <view class="bottom-bar">
+    <view class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+          wx:for="{{tabs}}" wx:key="key"
+          data-key="{{item.key}}"
+          bindtap="switchTab">
+      <text class="tab-icon">{{item.icon}}</text>
+      <text class="tab-label">{{item.label}}</text>
+    </view>
+  </view>
+
+</view>
+
+<view class="loading" wx:if="{{loading}}">
+  <text>加载中...</text>
+</view>

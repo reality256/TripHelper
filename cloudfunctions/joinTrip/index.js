@@ -27,9 +27,13 @@ exports.main = async (event) => {
   }
 
   try {
-    // 根据邀请码查找旅行
+    // 根据邀请码查找旅行（统一转大写）
+    const code = inviteCode.trim().toUpperCase()
+    if (code.length !== 6) {
+      return { success: false, data: null, message: '邀请码格式不正确' }
+    }
     const tripRes = await db.collection('trips')
-      .where({ inviteCode: inviteCode.trim() })
+      .where({ inviteCode: code })
       .get()
 
     if (tripRes.data.length === 0) {

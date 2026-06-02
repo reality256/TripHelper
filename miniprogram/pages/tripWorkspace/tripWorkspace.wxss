@@ -1,0 +1,510 @@
+/* pages/tripWorkspace/tripWorkspace.wxss */
+
+page {
+  height: 100%;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 顶部旅行信息 */
+.top-bar {
+  padding: 24rpx 32rpx 20rpx;
+  background: #FFF;
+  border-bottom: 1rpx solid #F0F0F0;
+  flex-shrink: 0;
+}
+
+.top-name {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 6rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-meta {
+  font-size: 24rpx;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 内容区 */
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #F5F7F6;
+  padding: 24rpx 0 0;
+}
+
+/* ===== 行程 tab ===== */
+.itin-list {
+  padding: 0 24rpx;
+}
+
+.itin-group {
+  margin-bottom: 8rpx;
+}
+
+.itin-date {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #666;
+  padding: 8rpx 8rpx 12rpx;
+}
+
+.itin-card {
+  padding: 24rpx 28rpx;
+  margin-bottom: 8rpx;
+}
+
+.itin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.itin-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1A1A1A;
+  flex: 1;
+}
+
+.itin-del {
+  font-size: 28rpx;
+  color: #CCC;
+  padding: 4rpx 8rpx;
+  flex-shrink: 0;
+}
+
+.itin-del-hidden {
+  visibility: hidden;
+}
+
+.itin-del:active {
+  color: var(--danger);
+}
+
+.itin-row {
+  font-size: 24rpx;
+  color: #888;
+  margin-bottom: 2rpx;
+}
+
+.itin-note {
+  font-size: 22rpx;
+  color: #BBB;
+  margin-top: 6rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx solid #F5F5F5;
+}
+
+/* 底部操作按钮 */
+.tab-action {
+  padding: 24rpx 24rpx 40rpx;
+}
+
+.tab-action-row {
+  display: flex;
+  gap: 24rpx;
+}
+
+.btn-half {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== 账单 tab ===== */
+
+/* 总金额 */
+.total-card {
+  text-align: center;
+  padding: 36rpx 32rpx;
+  margin: 0 24rpx 16rpx;
+}
+
+.total-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.total-amount {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 4rpx;
+}
+
+/* 账单列表 */
+.expense-list {
+  padding: 0 24rpx;
+}
+
+.expense-card {
+  padding: 24rpx 28rpx;
+}
+
+.expense-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+
+.expense-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  flex: 1;
+}
+
+.expense-amount {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-left: 24rpx;
+}
+
+.expense-meta {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.expense-date {
+  color: #BBB;
+}
+
+.expense-note {
+  font-size: 22rpx;
+  color: #BBB;
+  margin-top: 6rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx solid #F5F5F5;
+}
+
+/* 结算 */
+.settle-section {
+  padding: 0 24rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  margin: 24rpx 0 12rpx;
+}
+
+.settle-card {
+  padding: 24rpx 28rpx;
+  margin-bottom: 8rpx;
+}
+
+.settle-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4rpx;
+}
+
+.settle-name {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.settle-net {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.settle-detail {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.settle-done {
+  text-align: center;
+  font-size: 28rpx;
+  color: #666;
+  display: block;
+}
+
+/* 转账 */
+.transfer-card {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+  margin-bottom: 8rpx;
+  font-size: 28rpx;
+}
+
+.tf-from { color: var(--danger); }
+.tf-arrow { color: #CCC; }
+.tf-to   { color: var(--primary); }
+.tf-amount {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 30rpx;
+}
+
+.net-positive { color: var(--primary); }
+.net-negative { color: var(--danger); }
+
+/* ===== 待办 tab ===== */
+.todo-section {
+  padding: 0 24rpx;
+}
+
+.todo-card {
+  padding: 24rpx 28rpx;
+  margin-bottom: 8rpx;
+}
+
+.todo-done {
+  opacity: 0.55;
+}
+
+.todo-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.todo-check {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 3rpx solid #D0D0D0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #FFF;
+}
+
+.todo-check:active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.todo-done .todo-check {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.todo-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  flex: 1;
+}
+
+.todo-del {
+  font-size: 26rpx;
+  color: #CCC;
+  padding: 4rpx 8rpx;
+  flex-shrink: 0;
+}
+
+.todo-del:active {
+  color: var(--danger);
+}
+
+.todo-meta {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 56rpx;
+  margin-bottom: 2rpx;
+}
+
+.todo-done-time {
+  color: var(--primary);
+}
+
+.todo-note {
+  font-size: 22rpx;
+  color: #BBB;
+  margin-left: 56rpx;
+  margin-top: 4rpx;
+  padding-top: 8rpx;
+  border-top: 1rpx solid #F5F5F5;
+}
+
+/* ===== 设置 tab ===== */
+.settings-tab {
+  padding: 0 24rpx;
+}
+
+.set-section-title {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #999;
+  margin: 24rpx 0 12rpx 8rpx;
+}
+
+/* 成员 */
+.member-card {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 28rpx;
+  margin-bottom: 8rpx;
+}
+
+.member-avatar-placeholder {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #E8F5F3;
+  color: var(--primary);
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.member-info {
+  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+}
+
+.member-badge {
+  font-size: 20rpx;
+  color: var(--primary);
+  border: 1rpx solid var(--primary);
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  margin-left: 12rpx;
+}
+
+.member-me {
+  font-size: 20rpx;
+  color: #999;
+  background: #F0F0F0;
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  margin-left: 8rpx;
+}
+
+/* 邀请码 */
+.invite-card {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.invite-card:active {
+  background: #F9F9F9;
+}
+
+.invite-code-text {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 10rpx;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.invite-hint {
+  font-size: 22rpx;
+  color: #BBB;
+}
+
+/* 切换旅行 */
+.switch-card {
+  padding: 24rpx 28rpx;
+  margin-bottom: 8rpx;
+}
+
+.switch-card:active {
+  background: #F9F9F9;
+}
+
+.switch-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.switch-detail {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* ===== 占位 ===== */
+.tab-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 32rpx;
+}
+
+.ph-icon {
+  font-size: 72rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.ph-text {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.ph-desc {
+  font-size: 24rpx;
+  color: #BBB;
+}
+
+/* 底部菜单栏 */
+.bottom-bar {
+  display: flex;
+  background: #FFF;
+  border-top: 1rpx solid #F0F0F0;
+  padding-bottom: env(safe-area-inset-bottom);
+  flex-shrink: 0;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 0;
+  margin: 6rpx 8rpx;
+  border-radius: 16rpx;
+}
+
+.tab-icon {
+  font-size: 36rpx;
+  margin-bottom: 2rpx;
+}
+
+.tab-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.tab-item.active {
+  background: var(--primary);
+}
+
+.tab-item.active .tab-label {
+  color: #FFF;
+  font-weight: 500;
+}

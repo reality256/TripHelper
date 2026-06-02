@@ -94,7 +94,7 @@ Page({
   // 切换分摊成员（多选）
   onToggleParticipant: function (e) {
     var openid = e.currentTarget.dataset.openid
-    var list = this.data.participantOpenids
+    var list = this.data.participantOpenids.slice()
     var idx = list.indexOf(openid)
     if (idx === -1) {
       list.push(openid)

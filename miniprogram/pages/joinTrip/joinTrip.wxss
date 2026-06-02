@@ -1,17 +1,63 @@
 /* pages/joinTrip/joinTrip.wxss */
-/* 页面特有微调 */
-.page-title {
-  margin-bottom: 12rpx;
-}
 
-.page-subtitle {
-  margin-bottom: 48rpx;
-}
+.page-title { margin-bottom: 12rpx; }
+.page-subtitle { margin-bottom: 56rpx; }
 
-.card {
+/* 输入区域容器 */
+.code-area {
+  position: relative;
+  display: flex;
+  justify-content: center;
   margin-bottom: 56rpx;
 }
 
-.form-input {
-  text-transform: uppercase;
+/* 透明 input 覆盖在格子上层，接收触摸和键盘 */
+.code-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 2;
+  color: transparent;
+}
+
+/* 展示格子层 */
+.code-box-row {
+  display: flex;
+  justify-content: center;
+  gap: 16rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.code-box {
+  width: 88rpx;
+  height: 100rpx;
+  background: #F5F7F6;
+  border-radius: 14rpx;
+  border: 3rpx solid #E8E8E8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+  box-sizing: border-box;
+}
+
+.code-box.active {
+  border-color: var(--primary);
+}
+
+.code-box.filled {
+  background: #E8F5F3;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }

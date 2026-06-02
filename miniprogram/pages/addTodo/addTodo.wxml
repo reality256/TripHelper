@@ -1,0 +1,26 @@
+<!--pages/addTodo/addTodo.wxml-->
+<view class="container">
+  <view class="page-title">添加待办</view>
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">待办标题</view>
+      <input class="form-input" placeholder="例如：预订酒店" value="{{title}}" bindinput="onTitleInput" maxlength="50"/>
+    </view>
+    <view class="form-group">
+      <view class="form-label">负责人</view>
+      <view class="member-select">
+        <view class="member-tag" wx:for="{{memberList}}" wx:key="openid" data-openid="{{item.openid}}" bindtap="onToggleAssignee">
+          <view class="member-check is-multi {{item.isSelected ? 'checked' : ''}}">
+            <text wx:if="{{item.isSelected}}">✓</text>
+          </view>
+          <text class="member-tag-name">{{item.nickName}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="form-group">
+      <view class="form-label">备注</view>
+      <textarea class="form-input" style="height:120rpx;padding:16rpx 24rpx" placeholder="选填" value="{{note}}" bindinput="onNoteInput" maxlength="200"/>
+    </view>
+  </view>
+  <view class="btn-primary" bindtap="onSubmit">确认添加</view>
+</view>

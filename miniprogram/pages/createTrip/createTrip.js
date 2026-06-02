@@ -43,7 +43,7 @@ Page({
       wx.showToast({ title: '创建成功', icon: 'success' })
       // 跳转到旅行详情页
       setTimeout(function () {
-        wx.redirectTo({ url: '/pages/tripDetail/tripDetail?tripId=' + data.tripId })
+        wx.redirectTo({ url: '/pages/tripWorkspace/tripWorkspace?tripId=' + data.tripId })
       }, 1000)
     }).catch(function (err) {
       wx.hideLoading()
