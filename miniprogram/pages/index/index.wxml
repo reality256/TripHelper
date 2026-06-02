@@ -1,0 +1,27 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="header">
+    <view class="app-name">同行旅</view>
+    <view class="app-desc">多人旅行，轻松记账</view>
+  </view>
+
+  <view class="content">
+    <view class="empty-state" wx:if="{{trips.length === 0}}">
+      <view class="empty-state-icon">🧳</view>
+      <view class="empty-state-text">还没有旅行记录</view>
+      <view class="empty-state-text">创建一次旅行，邀请朋友们一起出发吧</view>
+    </view>
+
+    <view class="trip-list" wx:if="{{trips.length > 0}}">
+      <view class="card trip-card" wx:for="{{trips}}" wx:key="_id" data-id="{{item._id}}" bindtap="goTripDetail">
+        <view class="trip-name">{{item.name}}</view>
+        <view class="trip-info">{{item.destination}} · {{item.startDate}} 至 {{item.endDate}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="actions">
+    <view class="btn-primary" bindtap="goCreateTrip">创建旅行</view>
+    <view class="btn-secondary" bindtap="goJoinTrip">加入旅行</view>
+  </view>
+</view>

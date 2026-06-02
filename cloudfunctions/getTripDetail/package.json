@@ -1,0 +1,9 @@
+{
+  "name": "getTripDetail",
+  "version": "1.0.0",
+  "description": "获取旅行详情，包含成员、账单概览、行程概览",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

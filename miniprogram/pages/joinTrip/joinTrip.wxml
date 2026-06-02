@@ -1,0 +1,12 @@
+<!--pages/joinTrip/joinTrip.wxml-->
+<view class="container">
+  <view class="page-title">加入旅行</view>
+  <view class="page-subtitle">输入朋友分享的邀请码，加入他们的旅行</view>
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">邀请码</view>
+      <input class="form-input" placeholder="请输入邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="20"/>
+    </view>
+  </view>
+  <view class="btn-primary" bindtap="onSubmit">加入旅行</view>
+</view>

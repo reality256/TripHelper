@@ -1,0 +1,67 @@
+/* pages/addExpense/addExpense.wxss */
+
+.page-title {
+  margin-bottom: 40rpx;
+}
+
+.card {
+  margin-bottom: 56rpx;
+}
+
+/* 成员选择 */
+.member-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.member-tag {
+  display: flex;
+  align-items: center;
+  background: #F5F7F6;
+  border-radius: 14rpx;
+  padding: 16rpx 24rpx;
+}
+
+.member-tag:active {
+  background: #E8ECEA;
+}
+
+.member-check {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid #D0D0D0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12rpx;
+  font-size: 22rpx;
+  color: #FFF;
+  flex-shrink: 0;
+}
+
+.member-check.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.member-check.is-multi {
+  border-radius: 8rpx;
+}
+
+.member-tag-name {
+  font-size: 28rpx;
+}
+
+.member-tag-avg {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 12rpx;
+}
+
+.split-hint {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #999;
+}

@@ -1,0 +1,48 @@
+# Local tool and editor settings
+.*
+!.gitignore
+!.github/
+!.github/**
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dependencies
+node_modules/
+miniprogram_npm/
+
+# WeChat DevTools local/private settings
+project.private.config.json
+private.*
+*.local.*
+
+# Build and cache output
+dist/
+build/
+temp/
+tmp/
+.cache/
+.temp/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Cloud function package archives
+*.zip
+*.tgz

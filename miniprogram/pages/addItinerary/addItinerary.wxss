@@ -1,0 +1,9 @@
+/* pages/addItinerary/addItinerary.wxss */
+
+.page-title {
+  margin-bottom: 40rpx;
+}
+
+.card {
+  margin-bottom: 56rpx;
+}

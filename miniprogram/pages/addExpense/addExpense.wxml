@@ -1,0 +1,58 @@
+<!--pages/addExpense/addExpense.wxml-->
+<view class="container">
+  <view class="page-title">添加账单</view>
+
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">账单标题</view>
+      <input class="form-input" placeholder="例如：午餐火锅" value="{{title}}" bindinput="onTitleInput" maxlength="30"/>
+    </view>
+    <view class="form-group">
+      <view class="form-label">金额（元）</view>
+      <input class="form-input" type="digit" placeholder="0.00" value="{{amount}}" bindinput="onAmountInput"/>
+    </view>
+
+    <!-- 选择付款人 -->
+    <view class="form-group">
+      <view class="form-label">付款人</view>
+      <view class="member-select">
+        <view class="member-tag"
+              wx:for="{{memberList}}" wx:key="openid"
+              data-openid="{{item.openid}}"
+              bindtap="onSelectPayer">
+          <view class="member-check {{item.isPayer ? 'checked' : ''}}">
+            <text wx:if="{{item.isPayer}}">✓</text>
+          </view>
+          <text class="member-tag-name">{{item.nickName}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 选择分摊成员 -->
+    <view class="form-group">
+      <view class="form-label">参与分摊成员</view>
+      <view class="member-select">
+        <view class="member-tag"
+              wx:for="{{memberList}}" wx:key="openid"
+              data-openid="{{item.openid}}"
+              bindtap="onToggleParticipant">
+          <view class="member-check is-multi {{item.isParticipant ? 'checked' : ''}}">
+            <text wx:if="{{item.isParticipant}}">✓</text>
+          </view>
+          <text class="member-tag-name">{{item.nickName}}</text>
+          <text class="member-tag-avg" wx:if="{{item.perAmount}}">
+            ¥{{item.perAmount}}
+          </text>
+        </view>
+      </view>
+      <view class="split-hint" wx:if="{{splitHint}}">{{splitHint}}</view>
+    </view>
+
+    <view class="form-group">
+      <view class="form-label">备注</view>
+      <textarea class="form-input form-textarea" placeholder="选填" value="{{note}}" bindinput="onNoteInput" maxlength="200"/>
+    </view>
+  </view>
+
+  <view class="btn-primary" bindtap="onSubmit">确认添加</view>
+</view>

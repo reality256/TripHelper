@@ -1,0 +1,24 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/createTrip/createTrip",
+    "pages/joinTrip/joinTrip",
+    "pages/tripDetail/tripDetail",
+    "pages/itinerary/itinerary",
+    "pages/addItinerary/addItinerary",
+    "pages/expenses/expenses",
+    "pages/addExpense/addExpense",
+    "pages/settlement/settlement",
+    "pages/members/members"
+  ],
+  "window": {
+    "backgroundColor": "#F5F7F6",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTitleText": "同行旅",
+    "navigationBarTextStyle": "black"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "calculateSettlement",
+  "version": "1.0.0",
+  "description": "计算旅行结算结果，生成最简转账方案",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

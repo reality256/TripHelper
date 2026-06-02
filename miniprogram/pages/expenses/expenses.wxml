@@ -1,0 +1,40 @@
+<!--pages/expenses/expenses.wxml-->
+<view class="container">
+  <view class="page-title">账单管理</view>
+
+  <!-- 总金额卡片 -->
+  <view class="card total-card">
+    <view class="total-label">总消费</view>
+    <view class="total-amount">¥{{totalAmount}}</view>
+  </view>
+
+  <!-- 账单列表 -->
+  <view class="expense-list" wx:if="{{expenses.length > 0}}">
+    <view class="card expense-card" wx:for="{{expenses}}" wx:key="_id">
+      <view class="expense-header">
+        <text class="expense-title">{{item.title}}</text>
+        <text class="expense-amount">¥{{item.amountText}}</text>
+      </view>
+      <view class="expense-meta">
+        <text>{{item.participantCount}} 人分摊</text>
+        <text class="expense-date-sep">·</text>
+        <text>{{item.createdAt}}</text>
+      </view>
+      <view class="expense-note" wx:if="{{item.note}}">{{item.note}}</view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && expenses.length === 0}}">
+    <view class="empty-state-icon">💰</view>
+    <view class="empty-state-text">还没有账单记录</view>
+    <view class="empty-state-text">点击下方按钮添加第一笔账单</view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <view class="btn-primary" bindtap="goAddExpense">添加账单</view>
+</view>

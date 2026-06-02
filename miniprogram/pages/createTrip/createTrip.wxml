@@ -1,0 +1,30 @@
+<!--pages/createTrip/createTrip.wxml-->
+<view class="container">
+  <view class="page-title">创建一次旅行</view>
+  <view class="page-subtitle">填写基本信息，开始你的旅行</view>
+
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">旅行名称</view>
+      <input class="form-input" placeholder="例如：五一川西自驾" value="{{name}}" bindinput="onNameInput" maxlength="30"/>
+    </view>
+    <view class="form-group">
+      <view class="form-label">目的地</view>
+      <input class="form-input" placeholder="例如：四川·成都" value="{{destination}}" bindinput="onDestinationInput" maxlength="50"/>
+    </view>
+    <view class="form-group">
+      <view class="form-label">开始日期</view>
+      <picker mode="date" value="{{startDate}}" bindchange="onStartDateChange">
+        <view class="form-input" style="line-height:88rpx">{{startDate || '请选择开始日期'}}</view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <view class="form-label">结束日期</view>
+      <picker mode="date" value="{{endDate}}" bindchange="onEndDateChange">
+        <view class="form-input" style="line-height:88rpx">{{endDate || '请选择结束日期'}}</view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="btn-primary" bindtap="onSubmit">确认创建</view>
+</view>

@@ -1,0 +1,39 @@
+<!--pages/addItinerary/addItinerary.wxml-->
+<view class="container">
+  <view class="page-title">添加行程</view>
+
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">行程标题</view>
+      <input class="form-input" placeholder="例如：参观大熊猫基地" value="{{title}}" bindinput="onTitleInput" maxlength="50"/>
+    </view>
+    <view class="form-group">
+      <view class="form-label">日期</view>
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <view class="form-input" style="line-height:88rpx">{{date || '请选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <view class="form-label">地点</view>
+      <input class="form-input" placeholder="选填" value="{{location}}" bindinput="onLocationInput" maxlength="100"/>
+    </view>
+    <view class="form-group">
+      <view class="form-label">开始时间</view>
+      <picker mode="time" value="{{startTime}}" bindchange="onStartTimeChange">
+        <view class="form-input" style="line-height:88rpx">{{startTime || '请选择'}}</view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <view class="form-label">结束时间</view>
+      <picker mode="time" value="{{endTime}}" bindchange="onEndTimeChange">
+        <view class="form-input" style="line-height:88rpx">{{endTime || '请选择'}}</view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <view class="form-label">备注</view>
+      <textarea class="form-input" style="height:120rpx;padding:16rpx 24rpx" placeholder="选填" value="{{note}}" bindinput="onNoteInput" maxlength="200"/>
+    </view>
+  </view>
+
+  <view class="btn-primary" bindtap="onSubmit">确认添加</view>
+</view>

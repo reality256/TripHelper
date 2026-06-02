@@ -1,0 +1,17 @@
+/* pages/joinTrip/joinTrip.wxss */
+/* 页面特有微调 */
+.page-title {
+  margin-bottom: 12rpx;
+}
+
+.page-subtitle {
+  margin-bottom: 48rpx;
+}
+
+.card {
+  margin-bottom: 56rpx;
+}
+
+.form-input {
+  text-transform: uppercase;
+}

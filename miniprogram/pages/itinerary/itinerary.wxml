@@ -1,0 +1,37 @@
+<!--pages/itinerary/itinerary.wxml-->
+<view class="container">
+  <view class="page-title">行程管理</view>
+
+  <!-- 按日期分组 -->
+  <view class="group-list" wx:if="{{!isEmpty}}">
+    <view class="group" wx:for="{{groups}}" wx:key="date">
+      <view class="group-date">📅 {{item.date}}</view>
+      <view class="card itinerary-card" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
+        <view class="itinerary-header">
+          <text class="itinerary-title">{{row.title}}</text>
+        </view>
+        <view class="itinerary-meta" wx:if="{{row.timeText}}">
+          <text class="itinerary-time">🕐 {{row.timeText}}</text>
+        </view>
+        <view class="itinerary-meta" wx:if="{{row.location}}">
+          <text class="itinerary-location">📍 {{row.location}}</text>
+        </view>
+        <view class="itinerary-note" wx:if="{{row.note}}">{{row.note}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && isEmpty}}">
+    <view class="empty-state-icon">📋</view>
+    <view class="empty-state-text">还没有行程安排</view>
+    <view class="empty-state-text">点击下方按钮添加第一项行程</view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <view class="btn-primary" bindtap="goAddItinerary">添加行程</view>
+</view>

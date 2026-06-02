@@ -1,0 +1,47 @@
+/* pages/itinerary/itinerary.wxss */
+
+.group-list {
+  margin-bottom: 32rpx;
+}
+
+.group-date {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 16rpx;
+  margin-top: 8rpx;
+}
+
+.itinerary-card {
+  padding: 28rpx 32rpx;
+  margin-bottom: 12rpx;
+}
+
+.itinerary-header {
+  margin-bottom: 10rpx;
+}
+
+.itinerary-title {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.itinerary-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4rpx;
+}
+
+.itinerary-time,
+.itinerary-location {
+  font-size: 24rpx;
+  color: #888;
+}
+
+.itinerary-note {
+  font-size: 24rpx;
+  color: #BBB;
+  margin-top: 8rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #F5F5F5;
+}

@@ -1,0 +1,9 @@
+{
+  "name": "getItinerary",
+  "version": "1.0.0",
+  "description": "查询旅行行程列表，按日期和时间排序",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
