@@ -29,6 +29,17 @@ exports.main = async (event) => {
     return { success: false, data: null, message: '请选择日期' }
   }
 
+  // 校验结束时间不早于开始时间
+  if (startTime && endTime) {
+    const partsA = String(startTime).split(':')
+    const partsB = String(endTime).split(':')
+    const totalA = (parseInt(partsA[0]) || 0) * 60 + (parseInt(partsA[1]) || 0)
+    const totalB = (parseInt(partsB[0]) || 0) * 60 + (parseInt(partsB[1]) || 0)
+    if (totalB < totalA) {
+      return { success: false, data: null, message: '结束时间不能早于开始时间' }
+    }
+  }
+
   try {
     // 1. 查询旅行并校验权限
     const tripRes = await db.collection('trips').doc(tripId).get()

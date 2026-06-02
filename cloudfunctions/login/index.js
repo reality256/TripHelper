@@ -44,11 +44,14 @@ exports.main = async (event) => {
         user = Object.assign({}, user, updateData)
       }
     } else {
-      // 新用户，创建记录
+      // 新用户，创建记录：不设昵称则自动编号
+      var countRes = await db.collection('users').count()
+      var defaultNick = '旅友' + (countRes.total + 1)
       const newUser = {
         openid,
-        nickName: event.nickName || '微信用户',
+        nickName: event.nickName || defaultNick,
         avatarUrl: event.avatarUrl || '',
+        profileCompleted: false,
         createdAt: new Date(),
         updatedAt: new Date()
       }

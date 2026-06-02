@@ -13,14 +13,27 @@
     <!-- ===== 行程 tab ===== -->
     <block wx:if="{{activeTab === 'itinerary'}}">
 
+      <!-- 加载中 -->
+      <view class="loading-state" wx:if="{{itineraryLoading}}">
+        <view class="loading-spinner"></view>
+        <text>正在加载行程...</text>
+      </view>
+
+      <!-- 加载失败 -->
+      <view class="error-state" wx:elif="{{itineraryError}}">
+        <view class="error-state-icon">⚠️</view>
+        <view class="error-state-text">{{itineraryError}}</view>
+        <view class="btn-secondary" bindtap="retryLoadItinerary">重试</view>
+      </view>
+
       <!-- 空状态 -->
-      <view class="empty-state" wx:if="{{itineraryEmpty}}">
+      <view class="empty-state" wx:elif="{{itineraryLoaded && itineraryEmpty}}">
         <view class="empty-state-icon">📋</view>
         <view class="empty-state-text">暂无行程安排</view>
       </view>
 
       <!-- 行程列表：按日期分组 -->
-      <view class="itin-list" wx:if="{{!itineraryEmpty}}">
+      <view class="itin-list" wx:if="{{itineraryLoaded && !itineraryEmpty}}">
         <view class="itin-group" wx:for="{{itineraryGroups}}" wx:key="date">
           <view class="itin-date">{{item.date}}</view>
           <view class="card itin-card" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
@@ -48,6 +61,20 @@
     <!-- ===== 账单 tab ===== -->
     <block wx:if="{{activeTab === 'expenses'}}">
 
+      <!-- 加载中 -->
+      <view class="loading-state" wx:if="{{expensesLoading}}">
+        <view class="loading-spinner"></view>
+        <text>正在加载账单...</text>
+      </view>
+
+      <!-- 加载失败 -->
+      <view class="error-state" wx:elif="{{expensesError}}">
+        <view class="error-state-icon">⚠️</view>
+        <view class="error-state-text">{{expensesError}}</view>
+        <view class="btn-secondary" bindtap="retryLoadExpenses">重试</view>
+      </view>
+
+      <block wx:if="{{expensesLoaded}}">
       <!-- 总金额 -->
       <view class="card total-card">
         <view class="total-label">总消费</view>
@@ -70,13 +97,19 @@
       </view>
 
       <!-- 空状态 -->
-      <view class="empty-state" wx:if="{{expenseEmpty}}">
+      <view class="empty-state" wx:if="{{expensesLoaded && expenseEmpty}}">
         <view class="empty-state-icon">💰</view>
         <view class="empty-state-text">还没有账单记录</view>
       </view>
 
+      <!-- 结算：加载中 -->
+      <view class="loading-state" wx:if="{{settlementLoading && expensesLoaded && !expenseEmpty}}">
+        <view class="loading-spinner"></view>
+        <text>正在计算结算结果...</text>
+      </view>
+
       <!-- 结算结果 -->
-      <view class="settle-section" wx:if="{{hasSettlement}}">
+      <view class="settle-section" wx:if="{{settlementLoaded && hasSettlement}}">
         <view class="section-title">结算结果</view>
 
         <!-- 每人收支 -->
@@ -107,18 +140,34 @@
       <view class="tab-action">
         <view class="btn-primary" bindtap="goAddExpense">添加账单</view>
       </view>
+      </block><!-- end expensesLoaded -->
+
     </block>
 
     <!-- ===== 待办 tab ===== -->
     <block wx:if="{{activeTab === 'todos'}}">
 
-      <view class="empty-state" wx:if="{{todoEmpty}}">
+      <!-- 加载中 -->
+      <view class="loading-state" wx:if="{{todosLoading}}">
+        <view class="loading-spinner"></view>
+        <text>正在加载待办...</text>
+      </view>
+
+      <!-- 加载失败 -->
+      <view class="error-state" wx:elif="{{todosError}}">
+        <view class="error-state-icon">⚠️</view>
+        <view class="error-state-text">{{todosError}}</view>
+        <view class="btn-secondary" bindtap="retryLoadTodos">重试</view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:elif="{{todosLoaded && todoEmpty}}">
         <view class="empty-state-icon">✅</view>
         <view class="empty-state-text">暂无待办事项</view>
       </view>
 
-      <!-- 未完成 -->
-      <view class="todo-section" wx:if="{{!todoEmpty}}">
+      <!-- 待办列表 -->
+      <view class="todo-section" wx:if="{{todosLoaded && !todoEmpty}}">
         <block wx:for="{{todos}}" wx:key="_id">
           <view class="card todo-card {{item.completed ? 'todo-done' : ''}}">
             <view class="todo-header">
@@ -148,10 +197,26 @@
     <!-- ===== 设置 tab ===== -->
     <view class="settings-tab" wx:if="{{activeTab === 'settings'}}">
 
+      <!-- 个人资料 -->
+      <view class="set-section-title">个人资料</view>
+      <view class="card profile-card" bindtap="openProfileModal">
+        <view class="profile-avatar-wrap">
+          <image class="profile-avatar" wx:if="{{profileAvatarUrl}}" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
+          <view class="member-avatar-placeholder" wx:else>{{user.nickName ? user.nickName[0] : '?'}}</view>
+        </view>
+        <view class="profile-info">
+          <text class="profile-name">{{user.nickName || '旅友????'}}</text>
+          <text class="profile-hint">修改昵称和头像</text>
+        </view>
+      </view>
+
       <!-- 成员列表 -->
       <view class="set-section-title">旅行成员</view>
       <view class="card member-card" wx:for="{{members}}" wx:key="openid">
-        <view class="member-avatar-placeholder">{{item.firstChar}}</view>
+        <view class="member-avatar-wrap">
+          <image class="member-avatar-img" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <view class="member-avatar-placeholder" wx:else>{{item.firstChar}}</view>
+        </view>
         <view class="member-info">
           <text class="member-name">{{item.nickName}}</text>
           <text class="member-badge" wx:if="{{item.isCreator}}">创建者</text>
@@ -173,11 +238,6 @@
         <text class="switch-detail">{{item.destination}} · {{item.startDate}} 至 {{item.endDate}}</text>
       </view>
 
-      <!-- 创建 / 加入 -->
-      <view class="set-section-title">更多</view>
-      <view class="btn-secondary" style="margin-bottom:16rpx" bindtap="goCreateTrip">创建新旅行</view>
-      <view class="btn-secondary" bindtap="goJoinTrip">加入其他旅行</view>
-
     </view>
 
   </view>
@@ -195,6 +255,45 @@
 
 </view>
 
-<view class="loading" wx:if="{{loading}}">
+<view class="page-loading" wx:if="{{loading}}">
+  <view class="loading-spinner"></view>
   <text>加载中...</text>
+</view>
+
+<view class="page-error" wx:elif="{{!trip}}">
+  <view class="page-error-icon">⚠️</view>
+  <view class="page-error-text">旅行信息加载失败，请返回重试</view>
+  <view class="btn-primary" bindtap="loadTrip">重新加载</view>
+</view>
+
+<!-- 资料编辑弹窗 -->
+<view class="modal-mask" wx:if="{{showProfileModal}}" catchtap="closeProfileModal"></view>
+<view class="modal-panel" wx:if="{{showProfileModal}}">
+  <view class="modal-title">完善个人资料</view>
+  <view class="modal-desc">设置昵称和头像后，同行成员可以更容易识别你。</view>
+
+  <!-- 头像选择：view 做展示层，button 透明覆盖在上面 -->
+  <view class="avatar-picker-wrap">
+    <image class="avatar-preview" wx:if="{{profileAvatarUrl}}" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
+    <view class="avatar-placeholder" wx:else>
+      <text>选择头像</text>
+    </view>
+    <button class="avatar-picker-btn" plain="{{true}}" hover-class="none" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+  </view>
+
+  <!-- 昵称输入 -->
+  <view class="modal-input-wrap">
+    <input class="modal-input"
+           type="nickname"
+           placeholder="请输入昵称"
+           value="{{profileNickName}}"
+           maxlength="{{20}}"
+           bindinput="onProfileNickInput"/>
+  </view>
+
+  <!-- 按钮 -->
+  <view class="modal-actions">
+    <view class="btn-primary" bindtap="saveProfile">保存</view>
+    <view class="btn-secondary" bindtap="closeProfileModal">暂不设置</view>
+  </view>
 </view>

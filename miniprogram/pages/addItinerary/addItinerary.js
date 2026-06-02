@@ -1,5 +1,6 @@
 // pages/addItinerary/addItinerary.js
 var itineraryService = require('../../services/itineraryService')
+var dateUtils = require('../../utils/date')
 
 Page({
   data: {
@@ -32,6 +33,14 @@ Page({
     }
     if (!this.data.date) {
       wx.showToast({ title: '请选择日期', icon: 'none' }); return
+    }
+
+    // 校验结束时间不早于开始时间
+    if (this.data.startTime && this.data.endTime) {
+      if (dateUtils.isEndTimeBeforeStartTime(this.data.startTime, this.data.endTime)) {
+        wx.showToast({ title: '结束时间不能早于开始时间', icon: 'none' })
+        return
+      }
     }
 
     if (this.data.submitting) return

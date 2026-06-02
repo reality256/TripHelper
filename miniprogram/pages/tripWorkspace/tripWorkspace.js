@@ -5,6 +5,7 @@ var itineraryService = require('../../services/itineraryService')
 var expenseService = require('../../services/expenseService')
 var settlementService = require('../../services/settlementService')
 var todoService = require('../../services/todoService')
+var userService = require('../../services/userService')
 
 Page({
   data: {
@@ -14,6 +15,12 @@ Page({
     members: [],
     memberMap: {},
     loading: true,
+
+    // 用户资料
+    user: null,
+    showProfileModal: false,
+    profileNickName: '',
+    profileAvatarUrl: '',
 
     // 底部菜单
     tabs: [
@@ -28,19 +35,30 @@ Page({
     itineraryGroups: [],
     itineraryEmpty: true,
     itineraryManaging: false,
+    itineraryLoading: false,
+    itineraryLoaded: false,
+    itineraryError: '',
 
     // 账单模块
     expenses: [],
     expenseTotal: '0.00',
     expenseEmpty: true,
+    expensesLoading: false,
+    expensesLoaded: false,
+    expensesError: '',
     balances: [],
     transfers: [],
     hasSettlement: false,
+    settlementLoading: false,
+    settlementLoaded: false,
 
     // 待办模块
     todos: [],
     todoEmpty: true,
     todoManaging: false,
+    todosLoading: false,
+    todosLoaded: false,
+    todosError: '',
 
     // 设置模块
     myTrips: [],
@@ -56,6 +74,16 @@ Page({
 
   onShow: function () {
     if (this.data.tripId && !this.data.loading) {
+      // 同步最新 user（昵称/头像可能在资料弹窗中更新过）
+      var app = getApp()
+      var user = app.globalData.user
+      if (user) {
+        this.setData({
+          user: user,
+          profileNickName: user.nickName || '',
+          profileAvatarUrl: user.avatarUrl || ''
+        })
+      }
       this.loadTabData()
     }
   },
@@ -63,6 +91,7 @@ Page({
   // 加载旅行基本信息 + 成员
   loadTrip: function () {
     var that = this
+    this.setData({ loading: true })
     tripService.getTripDetail(this.data.tripId).then(function (data) {
       // 建立 openid → 昵称 映射
       var memberMap = {}
@@ -72,6 +101,9 @@ Page({
       }
 
       var app = getApp()
+      var user = app.globalData.user
+      var myOpenid = app.globalData.openid || ''
+
       var membersWithChar = members.map(function (m) {
         return {
           openid: m.openid,
@@ -87,10 +119,20 @@ Page({
         memberCount: membersWithChar.length,
         members: membersWithChar,
         memberMap: memberMap,
-        myOpenid: app.globalData.openid || '',
+        myOpenid: myOpenid,
+        user: user,
+        profileNickName: user ? (user.nickName || '') : '',
+        profileAvatarUrl: user ? (user.avatarUrl || '') : '',
         loading: false
       })
       that.loadTabData()
+
+      // 如果用户资料未完善，弹出资料设置弹窗
+      if (user && !user.profileCompleted) {
+        setTimeout(function () {
+          that.setData({ showProfileModal: true })
+        }, 600)
+      }
     }).catch(function (err) {
       console.error('[tripWorkspace] 加载失败:', err)
       that.setData({ loading: false })
@@ -127,6 +169,7 @@ Page({
 
   loadItinerary: function () {
     var that = this
+    this.setData({ itineraryLoading: true, itineraryError: '' })
     itineraryService.getItinerary(this.data.tripId).then(function (data) {
       var list = data.itinerary || []
       var groupMap = {}
@@ -147,10 +190,25 @@ Page({
         if (groupMap.hasOwnProperty(k)) groups.push(groupMap[k])
       }
       groups.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0 })
-      that.setData({ itineraryGroups: groups, itineraryEmpty: groups.length === 0 })
+      that.setData({
+        itineraryGroups: groups,
+        itineraryEmpty: groups.length === 0,
+        itineraryLoading: false,
+        itineraryLoaded: true,
+        itineraryError: ''
+      })
     }).catch(function (err) {
       console.error('[tripWorkspace] 行程加载失败:', err)
+      that.setData({
+        itineraryLoading: false,
+        itineraryLoaded: false,
+        itineraryError: err.message || '行程加载失败'
+      })
     })
+  },
+
+  retryLoadItinerary: function () {
+    this.loadItinerary()
   },
 
   deleteItinerary: function (e) {
@@ -182,6 +240,11 @@ Page({
   loadExpenses: function () {
     var that = this
     var memberMap = this.data.memberMap || {}
+
+    this.setData({
+      expensesLoading: true, expensesError: '',
+      settlementLoading: true
+    })
 
     // 同时加载账单和结算
     var p1 = expenseService.getExpenses(this.data.tripId)
@@ -239,13 +302,29 @@ Page({
         expenses: expenses,
         expenseTotal: (expenseData.totalAmount || 0).toFixed(2),
         expenseEmpty: expenses.length === 0,
+        expensesLoading: false,
+        expensesLoaded: true,
+        expensesError: '',
         balances: balances,
         transfers: transfers,
-        hasSettlement: balances.length > 0
+        hasSettlement: balances.length > 0,
+        settlementLoading: false,
+        settlementLoaded: true
       })
     }).catch(function (err) {
       console.error('[tripWorkspace] 账单加载失败:', err)
+      that.setData({
+        expensesLoading: false,
+        expensesLoaded: false,
+        expensesError: err.message || '账单加载失败',
+        settlementLoading: false,
+        settlementLoaded: false
+      })
     })
+  },
+
+  retryLoadExpenses: function () {
+    this.loadExpenses()
   },
 
   goAddExpense: function () {
@@ -256,6 +335,7 @@ Page({
   loadTodos: function () {
     var that = this
     var memberMap = this.data.memberMap || {}
+    this.setData({ todosLoading: true, todosError: '' })
     todoService.getTodos(this.data.tripId).then(function (data) {
       var todos = (data.todos || []).map(function (t) {
         // 格式化负责人员昵称
@@ -280,10 +360,25 @@ Page({
           doneTime: doneTime
         }
       })
-      that.setData({ todos: todos, todoEmpty: todos.length === 0 })
+      that.setData({
+        todos: todos,
+        todoEmpty: todos.length === 0,
+        todosLoading: false,
+        todosLoaded: true,
+        todosError: ''
+      })
     }).catch(function (err) {
       console.error('[tripWorkspace] 待办加载失败:', err)
+      that.setData({
+        todosLoading: false,
+        todosLoaded: false,
+        todosError: err.message || '待办加载失败'
+      })
     })
+  },
+
+  retryLoadTodos: function () {
+    this.loadTodos()
   },
 
   toggleTodo: function (e) {
@@ -351,11 +446,89 @@ Page({
     wx.redirectTo({ url: '/pages/tripWorkspace/tripWorkspace?tripId=' + tripId })
   },
 
-  goCreateTrip: function () {
-    wx.navigateTo({ url: '/pages/createTrip/createTrip' })
+  // ===== 用户资料编辑 =====
+  openProfileModal: function () {
+    var user = this.data.user || getApp().globalData.user || {}
+    this.setData({
+      showProfileModal: true,
+      profileNickName: user.nickName || '',
+      profileAvatarUrl: user.avatarUrl || ''
+    })
   },
 
-  goJoinTrip: function () {
-    wx.navigateTo({ url: '/pages/joinTrip/joinTrip' })
+  closeProfileModal: function () {
+    this.setData({ showProfileModal: false })
+  },
+
+  onChooseAvatar: function (e) {
+    var avatarUrl = e.detail.avatarUrl
+    this.setData({ profileAvatarUrl: avatarUrl })
+  },
+
+  onProfileNickInput: function (e) {
+    this.setData({ profileNickName: e.detail.value })
+  },
+
+  saveProfile: function () {
+    var that = this
+    var nickName = (this.data.profileNickName || '').trim()
+    if (!nickName) {
+      wx.showToast({ title: '请输入昵称', icon: 'none' })
+      return
+    }
+    if (nickName.length > 20) {
+      wx.showToast({ title: '昵称不能超过 20 个字符', icon: 'none' })
+      return
+    }
+
+    wx.showLoading({ title: '保存中...' })
+
+    var doSave = function (finalAvatarUrl) {
+      userService.updateUserProfile({
+        nickName: nickName,
+        avatarUrl: finalAvatarUrl || ''
+      }).then(function (res) {
+        wx.hideLoading()
+        wx.showToast({ title: '保存成功', icon: 'success' })
+
+        var app = getApp()
+        app.globalData.user = res.user
+        that.setData({
+          user: res.user,
+          showProfileModal: false,
+          profileNickName: res.user.nickName,
+          profileAvatarUrl: res.user.avatarUrl || ''
+        })
+        that.loadTrip()
+      }).catch(function (err) {
+        wx.hideLoading()
+        wx.showToast({ title: err.message || '保存失败', icon: 'none' })
+      })
+    }
+
+    var avatarUrl = this.data.profileAvatarUrl || ''
+    // 只有微信临时路径才需要上传云存储
+    var isTempPath = avatarUrl && (
+      avatarUrl.indexOf('wxfile://') === 0 ||
+      avatarUrl.indexOf('http://tmp/') === 0
+    )
+
+    if (isTempPath) {
+      var cloudPath = 'avatars/' + (getApp().globalData.openid || 'user') + '_' + Date.now() + '.png'
+      wx.cloud.uploadFile({
+        cloudPath: cloudPath,
+        filePath: avatarUrl
+      }).then(function (uploadRes) {
+        doSave(uploadRes.fileID)
+      }).catch(function (err) {
+        console.error('[tripWorkspace] 头像上传失败:', err)
+        wx.hideLoading()
+        wx.showToast({ title: '头像上传失败，请重试', icon: 'none' })
+        that.setData({ submitting: false })
+      })
+    } else {
+      // 无头像或已是云端 fileID → 直接保存
+      doSave(avatarUrl)
+    }
   }
 })
