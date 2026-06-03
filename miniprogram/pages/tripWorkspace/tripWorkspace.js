@@ -79,7 +79,8 @@ Page({
 
     // 预算模块
     budgetSummary: null,
-    budgetLoaded: false
+    budgetLoaded: false,
+    lastExpenseTime: ''
   },
 
   onLoad: function (options) {
@@ -219,7 +220,7 @@ Page({
     if (this.data.activeTab === 'itinerary') {
       this.loadItinerary()
     } else if (this.data.activeTab === 'expenses') {
-      this.loadExpenses()
+      this.refreshTripThenReloadExpenses()
     } else if (this.data.activeTab === 'todos') {
       this.loadTodos()
     } else if (this.data.activeTab === 'settings') {
@@ -413,13 +414,22 @@ Page({
         }
       })
 
+      // 最近一笔账单时间（用于账单概览）
+      var lastExpenseTime = ''
+      if (rawExpenses.length > 0 && rawExpenses[0].createdAt) {
+        var ld = new Date(rawExpenses[0].createdAt)
+        lastExpenseTime = (ld.getMonth() + 1) + '月' + ld.getDate() + '日 ' +
+          ('0' + ld.getHours()).slice(-2) + ':' + ('0' + ld.getMinutes()).slice(-2)
+      }
+
       that.setData({
         expenses: expenses,
         expenseTotal: displayTotal.toFixed(2),
         expenseEmpty: expenses.length === 0,
         expensesLoading: false,
         expensesLoaded: true,
-        expensesError: ''
+        expensesError: '',
+        lastExpenseTime: lastExpenseTime
       })
 
       // 预算总览

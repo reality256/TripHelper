@@ -95,6 +95,34 @@
 - `pages/tripWorkspace/tripWorkspace.wxml`、`pages/tripWorkspace/tripWorkspace.wxss`
 - `pages/budget-setting/budget-setting.js`、`pages/addExpense/addExpense.js`
 
+### V3.1 预算体验修正（2026-06-03）
+
+**阶段一：未设置预算时优化展示**
+- 未设预算时隐藏预算卡片中的"当前总花费"（不展示金额统计）
+- 加入者端完全不可见预算 UI（不显示设置入口、不显示暂未设置预算）
+- 仅创建者在未设预算时可见底部「暂未设置预算 [设置预算]」
+
+**阶段二：消除已设预算后的重复统计**
+- 已设预算时，预算卡片承载金额信息，下方账单统计区去除「总消费 ¥X」
+- 账单统计区改为轻量「账单概览」：共 X 笔账单 + 最近更新时间
+- 未设预算时保持原有「总消费 ¥X · X 笔」
+
+**阶段三：修复加入者端预算刷新时机**
+- `switchTab` 切换到账单 tab 时改为 `refreshTripThenReloadExpenses()`
+- 每次进入账单页都先刷新 trip 数据（含 budget）再加载账单
+- 加入者切 tab 即可看到预算变化，不再依赖点击「添加账单」
+
+**预算卡片 UI 强化**
+- 重构预算卡片布局：标题「旅行预算」+ 「设置」按钮
+- 双列金额对比：左侧 48rpx 大字「已花费」+ 右侧 34rpx「总预算」
+- 进度条 + 居中进度说明：「剩余 ¥X · 已使用 X%」
+- 超预算时已花费金额和进度条变红，提示「已超出 ¥X」
+
+**本次修改文件**
+- `pages/tripWorkspace/tripWorkspace.wxml`：预算卡片重构、统计区条件渲染、权限条件
+- `pages/tripWorkspace/tripWorkspace.wxss`：预算卡片样式重写
+- `pages/tripWorkspace/tripWorkspace.js`：switchTab 刷新链路修正
+
 ---
 
 ### 修改时间

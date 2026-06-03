@@ -231,36 +231,87 @@ page {
   margin: 0 24rpx 16rpx;
   background: #FFF;
   border-radius: 20rpx;
-  padding: 24rpx 28rpx;
+  padding: 28rpx 32rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  border-left: 6rpx solid var(--primary);
 }
 
 .budget-overview.bo-over-budget {
-  border-left-color: #E74C3C;
+  /* 超预算时保留默认样式，进度说明区变色即可 */
 }
 
-.bo-main {
+/* 卡片头部：标题 + 设置按钮 */
+.bo-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  margin-bottom: 24rpx;
 }
 
-.bo-left {
-  flex: 1;
-  min-width: 0;
+.bo-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
 }
 
-.bo-label {
+.bo-edit-btn {
   font-size: 24rpx;
-  color: #666;
+  color: var(--primary);
+  padding: 6rpx 18rpx;
+  border: 1rpx solid var(--primary);
+  border-radius: 20rpx;
+  flex-shrink: 0;
 }
 
+.bo-edit-btn:active { opacity: 0.7; }
+
+/* 金额区：已花费 + 总预算 双列 */
+.bo-amounts {
+  display: flex;
+  margin-bottom: 24rpx;
+}
+
+.bo-amount-block {
+  flex: 1;
+}
+
+.bo-amount-right {
+  text-align: right;
+}
+
+.bo-amount-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.bo-amount-value {
+  font-weight: 700;
+  display: block;
+}
+
+.bo-amount-spent {
+  font-size: 48rpx;
+  color: var(--primary);
+  line-height: 1.1;
+}
+
+.bo-amount-spent.bo-over-color {
+  color: #E74C3C;
+}
+
+.bo-amount-budget {
+  font-size: 34rpx;
+  color: #666;
+  padding-top: 14rpx;
+}
+
+/* 进度条 */
 .bo-bar-wrap {
   height: 8rpx;
   background: #F0F0F0;
   border-radius: 4rpx;
-  margin: 12rpx 0 8rpx;
+  margin-bottom: 12rpx;
   overflow: hidden;
 }
 
@@ -271,47 +322,20 @@ page {
   max-width: 100%;
 }
 
-.bo-rate {
-  font-size: 22rpx;
-  color: #999;
-}
-
-.bo-rate.bo-over {
-  color: #E74C3C;
-  font-weight: 500;
-}
-
-.bo-right {
-  flex-shrink: 0;
-  margin-left: 16rpx;
-}
-
-.bo-edit-btn {
-  font-size: 24rpx;
-  color: var(--primary);
-  padding: 8rpx 20rpx;
-  border: 1rpx solid var(--primary);
-  border-radius: 20rpx;
-}
-
-.bo-edit-btn:active { opacity: 0.7; }
-
+/* 进度说明 */
 .bo-bottom-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4rpx;
-}
-
-.bo-remaining {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #999;
+  text-align: center;
 }
 
-.bo-over-alert {
-  font-size: 22rpx;
-  color: #E74C3C;
+.bo-bottom-num {
   font-weight: 500;
+  color: #666;
+}
+
+.bo-over-text {
+  color: #E74C3C;
 }
 
 /* 无预算提示（移到页面底部） */
@@ -349,6 +373,19 @@ page {
 .expense-summary {
   text-align: center;
   padding: 32rpx 0 20rpx;
+}
+
+.expense-overview-title {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #666;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.expense-overview-info {
+  font-size: 24rpx;
+  color: #BBB;
 }
 
 .expense-sum-label {
