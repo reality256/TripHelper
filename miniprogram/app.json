@@ -13,7 +13,8 @@
     "pages/addTodo/addTodo",
     "pages/settlement/settlement",
     "pages/members/members",
-    "pages/schedule-map/schedule-map"
+    "pages/schedule-map/schedule-map",
+    "pages/budget-setting/budget-setting"
   ],
   "window": {
     "backgroundColor": "#F5F7F6",

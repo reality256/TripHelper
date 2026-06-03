@@ -61,9 +61,17 @@ Page({
       return
     }
 
-    // 排序、加序号
+    // 排序、加序号、计算状态
+    var now = new Date()
+    var todayStr = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2)
     var sorted = scheduleUtils.sortSchedulesByTime(daySchedules)
-    sorted.forEach(function (s, i) { s.dailyIndex = i + 1 })
+    var statusMap = {}
+    sorted.forEach(function (s, i) {
+      s.dailyIndex = i + 1
+      if (activeDate === todayStr) {
+        statusMap[i] = scheduleUtils.getScheduleStatus(s, now)
+      }
+    })
 
     // 有效地点
     var valid = mapUtils.getValidScheduleLocations(sorted)
@@ -72,7 +80,15 @@ Page({
     var markers = []
     var points = []
     if (valid.length > 0) {
-      markers = mapUtils.buildMapMarkers(valid)
+      // 为有效地点重建 statusMap（valid 的索引对应 markers 的 id）
+      var validStatusMap = {}
+      valid.forEach(function (v, vi) {
+        var origIdx = sorted.indexOf(v)
+        if (origIdx >= 0 && statusMap[origIdx]) {
+          validStatusMap[vi] = statusMap[origIdx]
+        }
+      })
+      markers = mapUtils.buildMapMarkers(valid, validStatusMap)
       points = mapUtils.buildRoutePolyline(valid)
     }
 

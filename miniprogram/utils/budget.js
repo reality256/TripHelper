@@ -38,7 +38,27 @@ function calculateIncomeTotal(bills) {
 }
 
 /**
- * 计算总消费（含入账，用于简单的总览）
+ * 计算账单页「总消费」：支出计入、入账扣减、跳过已删除
+ * 这是账单 tab 和预算页统一使用的总消费计算函数
+ * @param {Array} bills
+ * @returns {number}
+ */
+function calculateTotalExpense(bills) {
+  var total = 0
+  bills.forEach(function (b) {
+    if (b.deleted) return
+    var amt = Number(b.amount) || 0
+    if (b.type === 'income') {
+      total -= amt
+    } else {
+      total += amt
+    }
+  })
+  return Math.max(0, Math.round(total * 100) / 100)
+}
+
+/**
+ * 计算总金额（不作类型区分，纯累加）
  * @param {Array} bills
  * @returns {number}
  */
@@ -87,25 +107,28 @@ function calculateCategoryCosts(bills, categories) {
  * @returns {Object}
  */
 function calculateBudgetSummary(bills, budget, memberCount) {
-  var netExpense = calculateNetExpense(bills)
-  var incomeTotal = calculateIncomeTotal(bills)
-  var totalBudget = (budget && budget.totalBudget) ? Number(budget.totalBudget) : 0
+  var totalExpense = calculateTotalExpense(bills)
 
-  var usageRate = totalBudget > 0 ? Math.round(netExpense / totalBudget * 10000) / 100 : 0
-  var overBudget = totalBudget > 0 ? Math.max(0, Math.round((netExpense - totalBudget) * 100) / 100) : 0
-  var isOverBudget = totalBudget > 0 && netExpense > totalBudget
+  // 统一判断是否已设置预算：budget 存在且 totalBudget 为有效正数
+  var totalBudget = (budget && budget.totalBudget && Number(budget.totalBudget) > 0)
+    ? Number(budget.totalBudget)
+    : 0
   var hasBudget = totalBudget > 0
-  var perPerson = memberCount > 0 ? Math.round(netExpense / memberCount * 100) / 100 : netExpense
+
+  // 全部基于 totalExpense 计算（与卡片展示的"当前已花费"一致）
+  var usageRate = hasBudget ? Math.round(totalExpense / totalBudget * 10000) / 100 : 0
+  var overBudget = hasBudget ? Math.max(0, Math.round((totalExpense - totalBudget) * 100) / 100) : 0
+  var remainingBudget = hasBudget ? Math.max(0, Math.round((totalBudget - totalExpense) * 100) / 100) : 0
+  var isOverBudget = hasBudget && totalExpense > totalBudget
 
   return {
-    netExpense: netExpense,
-    incomeTotal: incomeTotal,
+    totalExpense: totalExpense,
     totalBudget: totalBudget,
     usageRate: usageRate,
+    remainingBudget: remainingBudget,
     overBudget: overBudget,
     isOverBudget: isOverBudget,
-    hasBudget: hasBudget,
-    perPerson: perPerson
+    hasBudget: hasBudget
   }
 }
 
@@ -138,6 +161,7 @@ function calculateCategoryBudgetStats(categoryCosts, categoryBudgets, categories
 
 module.exports = {
   calculateNetExpense: calculateNetExpense,
+  calculateTotalExpense: calculateTotalExpense,
   calculateIncomeTotal: calculateIncomeTotal,
   calculateGrossExpense: calculateGrossExpense,
   calculateCategoryCosts: calculateCategoryCosts,

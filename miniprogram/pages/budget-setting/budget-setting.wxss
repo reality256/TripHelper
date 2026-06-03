@@ -1,0 +1,159 @@
+/* pages/budget-setting/budget-setting.wxss */
+
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.loading-spinner {
+  width: 52rpx;
+  height: 52rpx;
+  border: 4rpx solid #E8E8E8;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* 当前总花费卡片 */
+.expense-info-card {
+  text-align: center;
+  padding: 24rpx 32rpx;
+}
+
+.ei-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 4rpx;
+}
+
+.ei-amount {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #E67E22;
+}
+
+/* 当前预算卡片 */
+.budget-info-card {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.bi-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}
+
+.bi-amount {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* 输入卡片 */
+.form-card {
+  padding: 32rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.budget-input-row {
+  display: flex;
+  align-items: center;
+  background: #F5F7F6;
+  border-radius: 14rpx;
+  padding: 0 24rpx;
+  height: 96rpx;
+}
+
+.budget-prefix {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #999;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+
+.budget-input {
+  flex: 1;
+  height: 100%;
+  font-size: 36rpx;
+  color: #1A1A1A;
+}
+
+.form-hint {
+  font-size: 22rpx;
+  color: #CCC;
+  margin-top: 12rpx;
+}
+
+/* 参考卡片 */
+.ref-card {
+  padding: 28rpx 32rpx;
+}
+
+.ref-title {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 12rpx;
+}
+
+.ref-item {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 6rpx;
+}
+
+/* 按钮区 */
+.btn-area {
+  margin-top: 40rpx;
+}
+
+.btn-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn-link {
+  text-align: center;
+  margin-top: 28rpx;
+  font-size: 26rpx;
+  color: #CCC;
+  padding: 16rpx;
+}
+
+.btn-link:active {
+  color: var(--danger);
+}
+
+.btn-link-danger {
+  color: #E74C3C;
+}
+
+.btn-link-danger:active {
+  opacity: 0.7;
+}
+
+/* 无权限提示 */
+.perm-hint {
+  text-align: center;
+  margin-top: 48rpx;
+  font-size: 26rpx;
+  color: #BBB;
+}

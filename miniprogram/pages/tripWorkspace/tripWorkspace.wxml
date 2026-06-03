@@ -44,7 +44,7 @@
       <view class="itin-list" wx:if="{{itineraryView === 'list'}}">
         <view class="itin-group" wx:for="{{itineraryGroups}}" wx:key="date">
           <view class="itin-date">{{item.date}}</view>
-          <view class="card itin-card {{row.isEnded ? 'itin-ended' : ''}} {{row.showActive ? 'itin-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
+          <view class="card itin-card {{row.isEnded ? 'itin-ended' : ''}} {{row.showActive ? 'itin-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id" data-id="{{row._id}}" bindtap="goEditItinerary">
             <view class="itin-header">
               <view class="itin-left">
                 <text class="itin-index">{{row.dailyIndex}}</text>
@@ -68,7 +68,7 @@
       <view class="timeline-view" wx:if="{{itineraryView === 'timeline'}}">
         <view class="tl-group" wx:for="{{itineraryGroups}}" wx:key="date">
           <view class="tl-date">{{item.date}}</view>
-          <view class="tl-item {{row.isEnded ? 'tl-ended' : ''}} {{row.showActive ? 'tl-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id">
+          <view class="tl-item {{row.isEnded ? 'tl-ended' : ''}} {{row.showActive ? 'tl-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id" data-id="{{row._id}}" bindtap="goEditItinerary">
             <view class="tl-marker">
               <view class="tl-dot"></view>
               <view class="tl-line" wx:if="{{index < item.items.length - 1}}"></view>
@@ -115,6 +115,26 @@
       </view>
 
       <block wx:if="{{expensesLoaded}}">
+
+      <!-- 预算总览卡片（已设置预算时靠上展示） -->
+      <view class="budget-overview {{budgetSummary.isOverBudget ? 'bo-over-budget' : ''}}" wx:if="{{budgetLoaded && budgetSummary.hasBudget}}">
+        <view class="bo-main">
+          <view class="bo-left">
+            <text class="bo-label">当前已花费 ¥{{budgetSummary.totalExpense}} / 预算 ¥{{budgetSummary.totalBudget}}</text>
+            <view class="bo-bar-wrap">
+              <view class="bo-bar-inner" style="width: {{budgetSummary.usageRate > 100 ? 100 : budgetSummary.usageRate}}%; background: {{budgetSummary.isOverBudget ? '#E74C3C' : 'var(--primary)'}};"></view>
+            </view>
+            <view class="bo-bottom-row">
+              <text class="bo-rate {{budgetSummary.isOverBudget ? 'bo-over' : ''}}">已使用 {{budgetSummary.usageRate}}%</text>
+              <text class="bo-remaining" wx:if="{{!budgetSummary.isOverBudget}}">剩余 ¥{{budgetSummary.remainingBudget}}</text>
+              <text class="bo-over-alert" wx:if="{{budgetSummary.isOverBudget}}">已超预算 ¥{{budgetSummary.overBudget}}</text>
+            </view>
+          </view>
+          <view class="bo-right" wx:if="{{trip.creatorOpenid === myOpenid}}" bindtap="goBudgetSetting">
+            <text class="bo-edit-btn">设置</text>
+          </view>
+        </view>
+      </view>
 
       <!-- 顶部操作区：总金额 + 按钮 -->
       <view class="expense-top-bar">
@@ -205,6 +225,12 @@
           <text class="tf-amount">¥{{item.amountText}}</text>
         </view>
         </block>
+      </view>
+
+      <!-- 无预算时：提示 + 设置入口（底部） -->
+      <view class="budget-empty" wx:if="{{budgetLoaded && !budgetSummary.hasBudget}}">
+        <text class="be-text">当前总花费 ¥{{budgetSummary.totalExpense}} · 暂未设置预算</text>
+        <text class="be-link" wx:if="{{trip.creatorOpenid === myOpenid}}" bindtap="goBudgetSetting">设置预算</text>
       </view>
 
       </block><!-- end expensesLoaded -->

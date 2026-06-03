@@ -52,12 +52,102 @@
 - `addItinerary`、`getRouteDistance`
 
 ### 未尽事宜（后续继续）
-- 预算设置页面（`pages/budget-setting`）
-- 账单页顶部预算总览卡片
-- 分类预算展示与超预算提醒
-- 预算权限控制（仅创建者可修改）
-- 时间线视图点击跳转详情
-- 地图 marker 自定义图标优化
+- 分类预算展示与超预算提醒（产品需求商议中）
+
+### V3.0 预算联动修复（2026-06-03）
+
+**修复问题**
+- 预算设置页新增"当前总花费"展示，直接复用 `utils/budget.js` 的 `calculateNetExpense`，确保与账单页总消费完全一致
+- 修复账单页返回后仍显示"暂未设置预算"：`tripWorkspace.onShow` 现在先刷新 trip 数据再加载账单
+- 修复清除预算只在本地清空、未写库：清除时调用云函数，数据库 `budget` 字段设为 `null`
+- 统一 `hasBudget` 判断：全项目使用 `budget && budget.totalBudget && Number(budget.totalBudget) > 0`
+- `updateTripBudget` 云函数支持清除模式（`totalBudget=0` → `budget: null`）
+
+**本次修改文件**
+- `cloudfunctions/updateTripBudget/index.js`：支持清除预算
+- `pages/budget-setting/budget-setting.js`：加载账单数据、显示总花费、真正清除
+- `pages/budget-setting/budget-setting.wxml`：新增总花费卡片
+- `pages/budget-setting/budget-setting.wxss`：新增样式
+- `pages/tripWorkspace/tripWorkspace.js`：onShow 刷新 trip 数据
+- `utils/budget.js`：显式化 hasBudget 判空
+
+**需要重新部署的云函数**
+- `updateTripBudget`
+
+### V3.0 预算模块精简（2026-06-03）
+
+**预算卡片优化**
+- 未设置预算时，预算卡片移至账单页底部（不再干扰账单浏览）
+- 已设置预算时，卡片保持靠上位置作为重要状态信息
+- 预算卡片删除"人均已花费""旅行入账"等冗余展示，简化为：当前已花费/预算、进度条、使用率、剩余预算/超预算提醒
+- `calculateBudgetSummary` 移除 `perPerson`、`incomeTotal` 返回值，新增 `remainingBudget`
+
+**金额校验统一**
+- 新增 `utils/amount.js`：`formatAmountInput()` 实时格式化、`validateAmount()` 提交校验
+- 账单金额（`addExpense.js`）和预算金额（`budget-setting.js`）统一使用同一校验函数
+
+**代码清理**
+- 删除 `tripWorkspace.wxss` 中废弃样式
+- 删除 WXML 中入账说明等被移除区块
+
+**本次修改文件**
+- `utils/amount.js`（新增）、`utils/budget.js`
+- `pages/tripWorkspace/tripWorkspace.wxml`、`pages/tripWorkspace/tripWorkspace.wxss`
+- `pages/budget-setting/budget-setting.js`、`pages/addExpense/addExpense.js`
+
+---
+
+### 修改时间
+- 2026-06-03
+
+### 已完成
+
+**预算管理系统**
+- 新增 `updateTripBudget` 云函数：仅旅行创建者可设置/更新总预算，含完整权限校验和金额格式校验
+- 新增 `pages/budget-setting/budget-setting` 预算设置页面：支持设置总预算，显示人均预算参考，非创建者只读
+- 账单 tab 顶部新增预算总览卡片：展示总花费/预算、使用率进度条、人均已花费、超预算警告
+- 预算权限控制：前端仅创建者可见「设置」入口，云函数二次校验
+- `getTripDetail` 返回 trip 对象中包含 `budget` 字段（云函数写入时自动创建，无需手动操作）
+
+**时间线视图点击跳转**
+- 行程列表视图和时间线视图均支持点击行程项跳转编辑
+- 新增 `updateItinerary` 云函数：行程创建者或旅行创建者可编辑行程
+- `addItinerary` 页面支持编辑模式：加载已有数据、回填表单（含地图地点）、提交时调用更新
+- `services/itineraryService.js` 新增 `updateItinerary`
+
+**地图 marker 优化**
+- `buildMapMarkers` 升级：使用圆形编号标签（`label`）替代文字气泡，支持状态着色（进行中橙色/已结束灰色/默认绿色）
+- label 样式：白色数字 + 彩色圆形背景，常驻显示
+- callout 改为点击显示（`BYCLICK`），展示行程标题
+- `schedule-map` 页面同日 marker 加入状态映射
+
+### 本次新增云函数
+- `updateTripBudget`：设置/更新旅行总预算
+- `updateItinerary`：编辑已有行程
+
+### 本次新增页面
+- `pages/budget-setting/budget-setting`
+
+### 本次修改云函数
+- `addItinerary`：新增地图选址字段（上期）
+
+### 本次修改页面
+- `pages/tripWorkspace/tripWorkspace`：预算总览卡片、行程点击跳转编辑
+- `pages/addItinerary/addItinerary`：支持编辑模式
+- `pages/schedule-map/schedule-map`：marker 状态着色
+
+### 本次修改工具函数
+- `utils/map.js`：`buildMapMarkers` 改用 label + BYCLICK callout
+
+### 本次修改服务层
+- `services/tripService.js`：新增 `updateTripBudget`
+- `services/itineraryService.js`：新增 `updateItinerary`
+
+### 需要部署的云函数
+- `updateTripBudget`、`updateItinerary`
+
+### 数据库说明
+- `trips` 集合新增 `budget` 字段（云函数写入时自动创建，无需手动操作）
 
 ---
 

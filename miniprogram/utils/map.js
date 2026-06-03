@@ -38,25 +38,51 @@ function getMissingLocationCount(schedules) {
 }
 
 /**
- * 构建地图 markers
+ * 构建地图 markers（带编号徽标 + 可点开气泡）
  * @param {Array} schedules - 已排序、含 dailyIndex、有经纬度的行程
+ * @param {Object} statusMap - 可选的行程状态映射 { idx: 'ongoing'|'ended'|... }
  * @returns {Array}
  */
-function buildMapMarkers(schedules) {
+function buildMapMarkers(schedules, statusMap) {
+  statusMap = statusMap || {}
   return schedules.map(function (s, idx) {
     var num = String(s.dailyIndex || idx + 1)
+    var status = statusMap[idx] || ''
+    var isOngoing = (status === 'ongoing')
+    var isEnded = (status === 'ended')
+
+    // 状态色
+    var markerColor = isEnded ? '#BBBBBB' : (isOngoing ? '#E67E22' : '#2A9D8F')
+
     return {
       id: idx,
       latitude: s.latitude,
       longitude: s.longitude,
+      width: 36,
+      height: 36,
+      // 编号标签：显示为圆形徽标
+      label: {
+        content: num,
+        color: '#FFFFFF',
+        fontSize: 14,
+        bgColor: markerColor,
+        borderRadius: 18,
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+        padding: 6,
+        textAlign: 'center',
+        anchorX: -9,
+        anchorY: -36
+      },
+      // 点击后显示详情气泡
       callout: {
-        content: num + '. ' + (s.title || ''),
+        content: (s.title || ''),
         padding: 8,
         borderRadius: 8,
         bgColor: '#FFFFFF',
-        display: 'ALWAYS',
+        display: 'BYCLICK',
         textAlign: 'center',
-        fontSize: 13
+        fontSize: 12
       }
     }
   })

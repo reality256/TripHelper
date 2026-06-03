@@ -8,6 +8,7 @@ var todoService = require('../../services/todoService')
 var userService = require('../../services/userService')
 var categoryUtils = require('../../utils/expenseCategory')
 var scheduleUtils = require('../../utils/schedule')
+var budgetUtils = require('../../utils/budget')
 
 Page({
   data: {
@@ -74,7 +75,11 @@ Page({
 
     // 设置模块
     myTrips: [],
-    myOpenid: ''
+    myOpenid: '',
+
+    // 预算模块
+    budgetSummary: null,
+    budgetLoaded: false
   },
 
   onLoad: function (options) {
@@ -103,9 +108,9 @@ Page({
           this.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: rawAvatar })
         }
       }
-      // 账单 tab：从添加页返回时刷新账单，已有结算结果则标记过期
+      // 账单 tab：从添加页/预算页返回时刷新账单 + trip（获取最新 budget）
       if (this.data.activeTab === 'expenses' && this.data.expensesLoaded) {
-        this.loadExpenses()
+        this.refreshTripThenReloadExpenses()
         if (this.data.settlementLoaded) {
           this.setData({ settlementStale: true })
         }
@@ -323,6 +328,13 @@ Page({
     this.loadItinerary()
   },
 
+  // 点击行程项跳转编辑
+  goEditItinerary: function (e) {
+    var id = e.currentTarget.dataset.id
+    if (!id) return
+    wx.navigateTo({ url: '/pages/addItinerary/addItinerary?tripId=' + this.data.tripId + '&itineraryId=' + id })
+  },
+
   deleteItinerary: function (e) {
     var that = this
     var id = e.currentTarget.dataset.id
@@ -349,6 +361,20 @@ Page({
   },
 
   // ===== 账单 =====
+
+  // 先刷新 trip 数据（获取最新 budget），再加载账单
+  refreshTripThenReloadExpenses: function () {
+    var that = this
+    tripService.getTripDetail(this.data.tripId).then(function (data) {
+      // 只更新 trip 字段（含 budget），不动成员列表等
+      that.setData({ trip: data.trip })
+      that.loadExpenses()
+    }).catch(function () {
+      // 即使刷新失败也照常加载账单
+      that.loadExpenses()
+    })
+  },
+
   loadExpenses: function () {
     var that = this
     var memberMap = this.data.memberMap || {}
@@ -358,13 +384,8 @@ Page({
     expenseService.getExpenses(this.data.tripId).then(function (data) {
       var rawExpenses = data.expenses || []
 
-      // 从原始数据计算总花费（防字段映射问题）
-      var rawTotal = 0
-      for (var i = 0; i < rawExpenses.length; i++) {
-        var rawAmt = Number(rawExpenses[i].amount) || 0
-        rawTotal += (rawExpenses[i].type === 'income') ? -rawAmt : rawAmt
-      }
-      var displayTotal = rawTotal > 0 ? rawTotal : 0
+      // 复用公共函数计算总消费（支出计入、入账扣减）
+      var displayTotal = budgetUtils.calculateTotalExpense(rawExpenses)
 
       var expenses = rawExpenses.map(function (e) {
         var dateStr = ''
@@ -399,6 +420,13 @@ Page({
         expensesLoading: false,
         expensesLoaded: true,
         expensesError: ''
+      })
+
+      // 预算总览
+      var tripBudget = (that.data.trip && that.data.trip.budget) || {}
+      that.setData({
+        budgetSummary: budgetUtils.calculateBudgetSummary(rawExpenses, tripBudget, that.data.memberCount),
+        budgetLoaded: true
       })
     }).catch(function (err) {
       console.error('[tripWorkspace] 账单加载失败:', err)
@@ -462,6 +490,10 @@ Page({
 
   goAddExpense: function () {
     wx.navigateTo({ url: '/pages/addExpense/addExpense?tripId=' + this.data.tripId })
+  },
+
+  goBudgetSetting: function () {
+    wx.navigateTo({ url: '/pages/budget-setting/budget-setting?tripId=' + this.data.tripId })
   },
 
   onTapExpense: function (e) {

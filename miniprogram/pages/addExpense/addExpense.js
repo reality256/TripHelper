@@ -5,6 +5,7 @@
 var tripService = require('../../services/tripService')
 var expenseService = require('../../services/expenseService')
 var categoryUtils = require('../../utils/expenseCategory')
+var amountUtils = require('../../utils/amount')
 var app = getApp()
 
 Page({
@@ -128,18 +129,7 @@ Page({
 
   onTitleInput: function (e) { this.setData({ title: e.detail.value }) },
   onAmountInput: function (e) {
-    var val = e.detail.value
-    // 只允许数字和一个小数点
-    val = val.replace(/[^\d.]/g, '')
-    // 只保留第一个小数点
-    var dotIndex = val.indexOf('.')
-    if (dotIndex !== -1) {
-      val = val.substring(0, dotIndex + 1) + val.substring(dotIndex + 1).replace(/\./g, '')
-    }
-    // 最多两位小数
-    if (dotIndex !== -1 && val.length - dotIndex > 3) {
-      val = val.substring(0, dotIndex + 3)
-    }
+    var val = amountUtils.formatAmountInput(e.detail.value)
     this.setData({ amount: val })
     this.refreshMemberList()
   },
@@ -179,8 +169,9 @@ Page({
     if (!this.data.title || !this.data.title.trim()) {
       wx.showToast({ title: '请输入账单标题', icon: 'none' }); return
     }
-    if (!this.data.amount || Number(this.data.amount) <= 0) {
-      wx.showToast({ title: '金额必须大于 0', icon: 'none' }); return
+    var amtResult = amountUtils.validateAmount(this.data.amount)
+    if (!amtResult.valid) {
+      wx.showToast({ title: amtResult.message, icon: 'none' }); return
     }
     if (!this.data.payerOpenid) {
       wx.showToast({ title: '请选择付款人', icon: 'none' }); return
@@ -196,7 +187,7 @@ Page({
     var payload = {
       tripId: this.data.tripId,
       title: this.data.title.trim(),
-      amount: Number(this.data.amount),
+      amount: amtResult.value,
       payerOpenid: this.data.payerOpenid,
       participantOpenids: this.data.participantOpenids,
       note: this.data.note || '',

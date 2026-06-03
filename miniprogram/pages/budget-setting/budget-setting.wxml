@@ -1,0 +1,76 @@
+<!--pages/budget-setting/budget-setting.wxml-->
+<view class="page-loading" wx:if="{{loading}}">
+  <view class="loading-spinner"></view>
+  <text>加载中...</text>
+</view>
+
+<view class="container" wx:else>
+
+  <!-- 无权限提示 -->
+  <block wx:if="{{permissionDenied}}">
+    <view class="page-title">预算设置</view>
+
+    <!-- 当前总花费 -->
+    <view class="card expense-info-card">
+      <view class="ei-label">当前总花费</view>
+      <view class="ei-amount">¥{{currentExpense}}</view>
+    </view>
+
+    <view class="card budget-info-card" wx:if="{{hasBudget}}">
+      <view class="bi-label">当前总预算</view>
+      <view class="bi-amount">¥{{currentBudget}}</view>
+    </view>
+    <view class="card ref-card" wx:if="{{memberCount > 0 && hasBudget}}">
+      <view class="ref-item">旅行成员：{{memberCount}} 人</view>
+      <view class="ref-item">人均预算：¥{{perPersonCurrent}}</view>
+    </view>
+    <view class="perm-hint">只有旅行创建者可以修改预算</view>
+  </block>
+
+  <!-- 有权限 -->
+  <block wx:else>
+  <view class="page-title">预算设置</view>
+  <view class="page-subtitle">为「{{trip.name}}」设置旅行总预算</view>
+
+  <!-- 当前总花费（复用账单页同一计算逻辑） -->
+  <view class="card expense-info-card">
+    <view class="ei-label">当前总花费</view>
+    <view class="ei-amount">¥{{currentExpense}}</view>
+  </view>
+
+  <!-- 当前预算展示 -->
+  <view class="card budget-info-card" wx:if="{{hasBudget}}">
+    <view class="bi-label">当前总预算</view>
+    <view class="bi-amount">¥{{currentBudget}}</view>
+  </view>
+
+  <!-- 预算输入卡片 -->
+  <view class="card form-card">
+    <view class="form-label">总预算（元）</view>
+    <view class="budget-input-row">
+      <text class="budget-prefix">¥</text>
+      <input class="budget-input"
+             type="digit"
+             placeholder="请输入总预算金额"
+             value="{{totalBudget}}"
+             bindinput="onBudgetInput"
+             maxlength="10"
+             focus="{{!hasBudget}}"/>
+    </view>
+    <view class="form-hint">例如：4000.00</view>
+  </view>
+
+  <!-- 人数参考 -->
+  <view class="card ref-card" wx:if="{{memberCount > 0 && totalBudget}}">
+    <view class="ref-title">预算参考</view>
+    <view class="ref-item">旅行成员：{{memberCount}} 人</view>
+    <view class="ref-item">人均预算：¥{{perPersonBudget ? perPersonBudget : '0.00'}}</view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="btn-area">
+    <view class="btn-primary {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">{{hasBudget ? '更新预算' : '设置预算'}}</view>
+    <view class="btn-link btn-link-danger" wx:if="{{hasBudget}}" bindtap="clearBudget">清除已设预算</view>
+  </view>
+  </block>
+</view>

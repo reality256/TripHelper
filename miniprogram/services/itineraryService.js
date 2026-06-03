@@ -5,5 +5,6 @@ function addItinerary(data) { return cloudService.callCloudFunction('addItinerar
 function getItinerary(tripId) { return cloudService.callCloudFunction('getItinerary', { tripId: tripId }) }
 function deleteItinerary(tripId, itineraryId) { return cloudService.callCloudFunction('deleteItinerary', { tripId: tripId, itineraryId: itineraryId }) }
 function getRouteDistance(from, to) { return cloudService.callCloudFunction('getRouteDistance', { from: from, to: to }) }
+function updateItinerary(data) { return cloudService.callCloudFunction('updateItinerary', data) }
 
-module.exports = { addItinerary: addItinerary, getItinerary: getItinerary, deleteItinerary: deleteItinerary, getRouteDistance: getRouteDistance }
+module.exports = { addItinerary: addItinerary, getItinerary: getItinerary, deleteItinerary: deleteItinerary, getRouteDistance: getRouteDistance, updateItinerary: updateItinerary }

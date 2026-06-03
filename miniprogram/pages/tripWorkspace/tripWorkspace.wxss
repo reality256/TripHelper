@@ -226,6 +226,121 @@ page {
 
 /* ===== 账单 tab ===== */
 
+/* ===== 预算总览卡片 ===== */
+.budget-overview {
+  margin: 0 24rpx 16rpx;
+  background: #FFF;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  border-left: 6rpx solid var(--primary);
+}
+
+.budget-overview.bo-over-budget {
+  border-left-color: #E74C3C;
+}
+
+.bo-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.bo-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.bo-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.bo-bar-wrap {
+  height: 8rpx;
+  background: #F0F0F0;
+  border-radius: 4rpx;
+  margin: 12rpx 0 8rpx;
+  overflow: hidden;
+}
+
+.bo-bar-inner {
+  height: 100%;
+  border-radius: 4rpx;
+  transition: width 0.3s;
+  max-width: 100%;
+}
+
+.bo-rate {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.bo-rate.bo-over {
+  color: #E74C3C;
+  font-weight: 500;
+}
+
+.bo-right {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.bo-edit-btn {
+  font-size: 24rpx;
+  color: var(--primary);
+  padding: 8rpx 20rpx;
+  border: 1rpx solid var(--primary);
+  border-radius: 20rpx;
+}
+
+.bo-edit-btn:active { opacity: 0.7; }
+
+.bo-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4rpx;
+}
+
+.bo-remaining {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.bo-over-alert {
+  font-size: 22rpx;
+  color: #E74C3C;
+  font-weight: 500;
+}
+
+/* 无预算提示（移到页面底部） */
+.budget-empty {
+  margin: 32rpx 24rpx 24rpx;
+  padding: 16rpx 24rpx;
+  background: #FFF;
+  border-radius: 12rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.be-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.be-link {
+  font-size: 24rpx;
+  color: var(--primary);
+  padding: 6rpx 16rpx;
+  border: 1rpx solid var(--primary);
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+
+.be-link:active { opacity: 0.7; }
+
 /* 顶部操作区 */
 .expense-top-bar {
   padding: 0 24rpx 20rpx;
