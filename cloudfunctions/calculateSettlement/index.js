@@ -75,13 +75,28 @@ exports.main = async (event) => {
       balanceMap[oid] = { paid: 0, shouldPay: 0 }
     })
 
-    // 6. 遍历账单计算
+    // 6. 防御性校验：检测空参与人账单（历史异常数据）
+    var invalidExpenses = []
+    expenses.forEach(function (exp) {
+      var participants = exp.participantOpenids || []
+      if (participants.length === 0) {
+        invalidExpenses.push(exp._id || '(unknown)')
+      }
+    })
+    if (invalidExpenses.length > 0) {
+      console.warn('[calculateSettlement] 发现空参与人账单:', invalidExpenses.join(', '))
+      return {
+        success: false,
+        data: { invalidExpenseIds: invalidExpenses },
+        message: '存在 ' + invalidExpenses.length + ' 笔未设置参与人的账单，请先修正或删除后再结算'
+      }
+    }
+
+    // 7. 遍历账单计算
     expenses.forEach(function (exp) {
       var amountInCents = Math.round(Number(exp.amount) * 100)
       var participants = exp.participantOpenids || []
       var payer = exp.payerOpenid
-
-      if (participants.length === 0) return
 
       var isIncome = exp.type === 'income'
       // 保证历史账单中已退出成员也参与结算

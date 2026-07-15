@@ -327,7 +327,7 @@
       <view class="set-section-title">个人资料</view>
       <view class="card profile-card" bindtap="openProfileModal">
         <view class="profile-avatar-wrap">
-          <image class="profile-avatar" wx:if="{{profileAvatarUrl}}" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
+          <image class="profile-avatar" wx:if="{{profileAvatarUrl}}" src="{{profileAvatarUrl}}" mode="aspectFill" binderror="onProfileAvatarError"></image>
           <view class="member-avatar-placeholder" wx:else>{{user.nickName ? user.nickName[0] : '?'}}</view>
         </view>
         <view class="profile-info">
@@ -340,7 +340,7 @@
       <view class="set-section-title">旅行成员</view>
       <view class="card member-card" wx:for="{{members}}" wx:key="openid">
         <view class="member-avatar-wrap">
-          <image class="member-avatar-img" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <image class="member-avatar-img" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill" binderror="onMemberAvatarError" data-index="{{index}}"></image>
           <view class="member-avatar-placeholder" wx:else>{{item.firstChar}}</view>
         </view>
         <view class="member-info">
@@ -417,7 +417,7 @@
 
   <!-- 头像选择：view 做展示层，button 透明覆盖在上面 -->
   <view class="avatar-picker-wrap">
-    <image class="avatar-preview" wx:if="{{profileAvatarUrl}}" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
+    <image class="avatar-preview" wx:if="{{profileAvatarUrl}}" src="{{profileAvatarUrl}}" mode="aspectFill" binderror="onProfileAvatarError"></image>
     <view class="avatar-placeholder" wx:else>
       <text>选择头像</text>
     </view>

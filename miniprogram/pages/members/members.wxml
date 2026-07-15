@@ -11,7 +11,7 @@
     <!-- 成员列表 -->
     <view class="member-list">
       <view class="card member-card" wx:for="{{members}}" wx:key="openid">
-        <image class="member-avatar" src="{{item.avatarUrl || '/images/avatar.png'}}" mode="aspectFill"/>
+        <image class="member-avatar" src="{{item.avatarUrl || '/images/avatar.png'}}" mode="aspectFill" binderror="onAvatarError"/>
         <view class="member-info">
           <view class="member-name">
             {{item.nickName}}

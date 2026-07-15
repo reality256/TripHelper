@@ -45,8 +45,10 @@ exports.main = async (event) => {
         .get()
       // 排除已软删除的账单（兼容旧数据无 deleted 字段）
       expenses = expenseRes.data.filter(function (e) { return !e.deleted })
+      // 总消费 = 支出总额 - 入账总额（与前端 calculateTotalExpense 一致）
       totalAmount = expenses.reduce(function (sum, e) {
-        return sum + (e.amount || 0)
+        var amt = Number(e.amount) || 0
+        return e.type === 'income' ? sum - amt : sum + amt
       }, 0)
     } catch (e) {
       console.log('[getExpenses] expenses 集合查询失败（可能尚不存在）:', e.message)

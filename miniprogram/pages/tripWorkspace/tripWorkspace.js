@@ -9,6 +9,7 @@ var userService = require('../../services/userService')
 var categoryUtils = require('../../utils/expenseCategory')
 var scheduleUtils = require('../../utils/schedule')
 var budgetUtils = require('../../utils/budget')
+var userUtils = require('../../utils/user')
 
 Page({
   data: {
@@ -24,6 +25,7 @@ Page({
     showProfileModal: false,
     profileNickName: '',
     profileAvatarUrl: '',
+    hasNewAvatar: false,  // 标记用户是否选择了新头像
 
     // 底部菜单
     tabs: [
@@ -98,13 +100,17 @@ Page({
       if (user) {
         var that = this
         var rawAvatar = user.avatarUrl || ''
-        if (rawAvatar && rawAvatar.indexOf('cloud://') === 0) {
+        if (userUtils.isCloudFileID(rawAvatar)) {
           wx.cloud.getTempFileURL({ fileList: [rawAvatar] }).then(function (res) {
             var tmp = (res.fileList && res.fileList[0]) ? res.fileList[0].tempFileURL : rawAvatar
             that.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: tmp })
           }).catch(function () {
             that.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: '' })
           })
+        } else if (userUtils.isCloudTempUrl(rawAvatar)) {
+          // 过期 temp URL → 使用默认头像
+          console.warn('[tripWorkspace] onShow: 头像为过期临时 URL，使用默认头像')
+          this.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: '' })
         } else {
           this.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: rawAvatar })
         }
@@ -137,14 +143,18 @@ Page({
       var user = app.globalData.user
       var myOpenid = app.globalData.openid || ''
 
-      // 收集所有 cloud:// 文件 ID，准备批量转换
+      // 收集所有 cloud:// 文件 ID，准备批量转换（去重）
       var cloudFileIds = []
-      if (user && user.avatarUrl && user.avatarUrl.indexOf('cloud://') === 0) {
+      var seenFileIds = {}
+      if (userUtils.isCloudFileID(user && user.avatarUrl)) {
         cloudFileIds.push(user.avatarUrl)
+        seenFileIds[user.avatarUrl] = true
       }
       for (var j = 0; j < members.length; j++) {
-        if (members[j].avatarUrl && members[j].avatarUrl.indexOf('cloud://') === 0) {
-          cloudFileIds.push(members[j].avatarUrl)
+        var mav = members[j].avatarUrl
+        if (userUtils.isCloudFileID(mav) && !seenFileIds[mav]) {
+          cloudFileIds.push(mav)
+          seenFileIds[mav] = true
         }
       }
 
@@ -168,7 +178,24 @@ Page({
 
         var membersWithChar = members.map(function (m) {
           var displayAvatar = m.avatarUrl
-          if (fileMap[m.avatarUrl]) displayAvatar = fileMap[m.avatarUrl]
+          var fromFileMap = false
+          if (fileMap[m.avatarUrl]) {
+            displayAvatar = fileMap[m.avatarUrl]
+            fromFileMap = true
+          }
+          // 并非来自 fileMap 的才需要检查（来自 fileMap 的是新鲜 temp URL，可直接使用）
+          if (!fromFileMap) {
+            // cloud:// 未能转换为 temp URL → 无法渲染 → 降级为空
+            if (userUtils.isCloudFileID(displayAvatar)) {
+              console.warn('[tripWorkspace] 成员头像 cloud:// 未能转换:', m.nickName)
+              displayAvatar = ''
+            }
+            // 数据库中存了过期的 temp URL → 降级为空
+            if (userUtils.isCloudTempUrl(displayAvatar)) {
+              console.warn('[tripWorkspace] 成员头像为过期临时 URL:', m.nickName)
+              displayAvatar = ''
+            }
+          }
           return {
             openid: m.openid,
             nickName: m.nickName,
@@ -179,7 +206,22 @@ Page({
         })
 
         var displayUserAvatar = user ? (user.avatarUrl || '') : ''
-        if (fileMap[displayUserAvatar]) displayUserAvatar = fileMap[displayUserAvatar]
+        var userFromFileMap = false
+        if (fileMap[displayUserAvatar]) {
+          displayUserAvatar = fileMap[displayUserAvatar]
+          userFromFileMap = true
+        }
+        // 并非来自 fileMap 的才需要检查（来自 fileMap 的是新鲜 temp URL，可直接使用）
+        if (!userFromFileMap) {
+          if (userUtils.isCloudFileID(displayUserAvatar)) {
+            console.warn('[tripWorkspace] 当前用户头像 cloud:// 未能转换，使用占位符')
+            displayUserAvatar = ''
+          }
+          if (userUtils.isCloudTempUrl(displayUserAvatar)) {
+            console.warn('[tripWorkspace] 当前用户头像为过期临时 URL')
+            displayUserAvatar = ''
+          }
+        }
 
         that.setData({
           trip: data.trip,
@@ -737,18 +779,29 @@ Page({
     var that = this
     var user = this.data.user || getApp().globalData.user || {}
     var avatarUrl = user.avatarUrl || ''
-    if (avatarUrl && avatarUrl.indexOf('cloud://') === 0) {
+
+    if (userUtils.isCloudFileID(avatarUrl)) {
       wx.cloud.getTempFileURL({ fileList: [avatarUrl] }).then(function (res) {
         var tmp = (res.fileList && res.fileList[0]) ? res.fileList[0].tempFileURL : ''
-        that.setData({ showProfileModal: true, profileNickName: user.nickName || '', profileAvatarUrl: tmp })
+        that.setData({ showProfileModal: true, profileNickName: user.nickName || '', profileAvatarUrl: tmp, hasNewAvatar: false })
       }).catch(function () {
-        that.setData({ showProfileModal: true, profileNickName: user.nickName || '', profileAvatarUrl: '' })
+        that.setData({ showProfileModal: true, profileNickName: user.nickName || '', profileAvatarUrl: '', hasNewAvatar: false })
+      })
+    } else if (userUtils.isCloudTempUrl(avatarUrl)) {
+      // 旧数据中可能存了过期的 tempFileURL → 无法恢复，显示默认头像
+      console.warn('[tripWorkspace] 头像地址为过期临时 URL，使用默认头像')
+      this.setData({
+        showProfileModal: true,
+        profileNickName: user.nickName || '',
+        profileAvatarUrl: '',
+        hasNewAvatar: false
       })
     } else {
       this.setData({
         showProfileModal: true,
         profileNickName: user.nickName || '',
-        profileAvatarUrl: avatarUrl
+        profileAvatarUrl: avatarUrl,
+        hasNewAvatar: false
       })
     }
   },
@@ -757,9 +810,26 @@ Page({
     this.setData({ showProfileModal: false })
   },
 
+  // 头像加载失败时隐藏该 image，显示占位符
+  onProfileAvatarError: function () {
+    console.warn('[tripWorkspace] 头像加载失败，使用默认占位')
+    this.setData({ profileAvatarUrl: '' })
+  },
+
+  onMemberAvatarError: function (e) {
+    var idx = e.currentTarget.dataset.index
+    console.warn('[tripWorkspace] 成员头像加载失败, index:', idx)
+    // 清空对应成员的 avatarUrl，触发 wx:else 显示占位符
+    if (idx !== undefined) {
+      var members = this.data.members
+      members[idx].avatarUrl = ''
+      this.setData({ members: members })
+    }
+  },
+
   onChooseAvatar: function (e) {
     var avatarUrl = e.detail.avatarUrl
-    this.setData({ profileAvatarUrl: avatarUrl })
+    this.setData({ profileAvatarUrl: avatarUrl, hasNewAvatar: true })
   },
 
   onProfileNickInput: function (e) {
@@ -804,27 +874,47 @@ Page({
     }
 
     var avatarUrl = this.data.profileAvatarUrl || ''
-    // 只有微信临时路径才需要上传云存储
-    var isTempPath = avatarUrl && (
-      avatarUrl.indexOf('wxfile://') === 0 ||
-      avatarUrl.indexOf('http://tmp/') === 0
-    )
+    var hasNewAvatar = this.data.hasNewAvatar
 
-    if (isTempPath) {
-      var cloudPath = 'avatars/' + (getApp().globalData.openid || 'user') + '_' + Date.now() + '.png'
-      wx.cloud.uploadFile({
-        cloudPath: cloudPath,
-        filePath: avatarUrl
-      }).then(function (uploadRes) {
-        doSave(uploadRes.fileID)
-      }).catch(function (err) {
-        console.error('[tripWorkspace] 头像上传失败:', err)
-        wx.hideLoading()
-        wx.showToast({ title: '头像上传失败，请重试', icon: 'none' })
-      })
+    if (hasNewAvatar) {
+      // 用户选择了新头像
+      // 判定是否需要上传：不是 cloud:// 永久文件、不是过期 CloudBase temp URL → 即本地临时路径
+      var isLocalPath = avatarUrl && !userUtils.isCloudFileID(avatarUrl) && !userUtils.isCloudTempUrl(avatarUrl)
+
+      if (isLocalPath) {
+        console.log('[tripWorkspace] 上传新头像, 本地路径:', avatarUrl)
+        var cloudPath = 'avatars/' + (getApp().globalData.openid || 'user') + '_' + Date.now() + '.png'
+        wx.cloud.uploadFile({
+          cloudPath: cloudPath,
+          filePath: avatarUrl
+        }).then(function (uploadRes) {
+          console.log('[tripWorkspace] 头像上传成功, fileID:', uploadRes.fileID)
+          doSave(uploadRes.fileID)
+        }).catch(function (err) {
+          console.error('[tripWorkspace] 头像上传失败:', err)
+          wx.hideLoading()
+          wx.showToast({ title: '头像上传失败，请重试', icon: 'none' })
+        })
+      } else if (userUtils.isCloudFileID(avatarUrl)) {
+        // 已是 cloud:// fileID → 直接保存
+        doSave(avatarUrl)
+      } else {
+        // 空值或过期 URL → 清空头像
+        doSave('')
+      }
     } else {
-      // 无头像或已是云端 fileID → 直接保存
-      doSave(avatarUrl)
+      // 用户未选择新头像：使用数据库中已有的 cloud:// fileID，防止保存临时的 tempFileURL
+      var storedAvatar = (this.data.user && this.data.user.avatarUrl) || ''
+      // 只有当存储的是 cloud:// fileID 时才使用；过期 temp URL 保留原样不覆盖
+      if (userUtils.isCloudFileID(storedAvatar)) {
+        doSave(storedAvatar)
+      } else if (userUtils.isCloudTempUrl(storedAvatar)) {
+        // 旧数据中已存在过期 temp URL → 不更新头像字段，等用户下次主动更换
+        console.warn('[tripWorkspace] 检测到数据库中为过期临时 URL，跳过头像更新')
+        doSave(storedAvatar)
+      } else {
+        doSave(avatarUrl)
+      }
     }
   }
 })

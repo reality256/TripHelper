@@ -2,7 +2,7 @@
 // V3.0 预算工具函数：预算总览、分类统计、人均消耗
 
 /**
- * 计算实际净消费（支出 - 退款）
+ * 计算支出净额（不计入账）
  * @param {Array} bills - 账单数组，每项含 amount, type
  * @returns {number}
  */
@@ -11,12 +11,8 @@ function calculateNetExpense(bills) {
   bills.forEach(function (b) {
     var amt = Number(b.amount) || 0
     if (b.deleted) return
-    if (b.type === 'income') return // 入账不参与净消费计算
-    if (b.type === 'refund') {
-      total -= amt
-    } else {
-      total += amt
-    }
+    if (b.type === 'income') return
+    total += amt
   })
   return Math.max(0, Math.round(total * 100) / 100)
 }
@@ -73,7 +69,7 @@ function calculateGrossExpense(bills) {
 }
 
 /**
- * 计算分类花费（支出 - 对应分类退款）
+ * 计算分类支出（不计入账）
  * @param {Array} bills
  * @param {Array} categories - 分类 key 数组
  * @returns {Object} { food: 860, transport: 450, ... }
@@ -87,11 +83,7 @@ function calculateCategoryCosts(bills, categories) {
     var cat = b.category || 'food'
     var amt = Number(b.amount) || 0
     if (!costs.hasOwnProperty(cat)) costs[cat] = 0
-    if (b.type === 'refund') {
-      costs[cat] -= amt
-    } else {
-      costs[cat] += amt
-    }
+    costs[cat] += amt
   })
   for (var k in costs) {
     if (costs.hasOwnProperty(k)) costs[k] = Math.max(0, Math.round(costs[k] * 100) / 100)

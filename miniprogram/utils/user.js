@@ -16,17 +16,25 @@ function getDisplayName(user) {
 }
 
 /**
- * 获取用户显示头像
- * 优先使用 user.avatarUrl，否则返回空字符串（使用默认头像占位）
+ * 判断头像 URL 是否为 cloud:// 格式的永久文件 ID
  */
-function getDisplayAvatar(user) {
-  if (user && user.avatarUrl) {
-    return user.avatarUrl
-  }
-  return ''
+function isCloudFileID(url) {
+  return !!(url && typeof url === 'string' && url.indexOf('cloud://') === 0)
+}
+
+/**
+ * 判断头像 URL 是否为 CloudBase 临时下载 URL（含 sign 签名，会过期）
+ * 格式: https://xxx.tcb.qcloud.la/path?sign=...&t=...
+ */
+function isCloudTempUrl(url) {
+  return !!(url && typeof url === 'string' &&
+    url.indexOf('https://') === 0 &&
+    url.indexOf('.tcb.qcloud.la/') !== -1 &&
+    url.indexOf('sign=') !== -1)
 }
 
 module.exports = {
   getDisplayName: getDisplayName,
-  getDisplayAvatar: getDisplayAvatar
+  isCloudFileID: isCloudFileID,
+  isCloudTempUrl: isCloudTempUrl
 }

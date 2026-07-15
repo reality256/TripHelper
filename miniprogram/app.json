@@ -23,6 +23,11 @@
     "navigationBarTitleText": "同行旅",
     "navigationBarTextStyle": "black"
   },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于在地图上选择行程地点和查看每日路线规划"
+    }
+  },
   "sitemapLocation": "sitemap.json",
   "style": "v2",
   "lazyCodeLoading": "requiredComponents"

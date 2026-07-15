@@ -64,11 +64,15 @@ exports.main = async (event) => {
       const expenseRes = await db.collection('expenses')
         .where({ tripId })
         .get()
-      const totalAmount = expenseRes.data.reduce(function (sum, e) {
-        return sum + (e.amount || 0)
+      // 排除已删除账单
+      const activeExpenses = expenseRes.data.filter(function (e) { return !e.deleted })
+      // 总消费 = 支出总额 - 入账总额（与前端 calculateTotalExpense 一致）
+      const totalAmount = activeExpenses.reduce(function (sum, e) {
+        var amt = Number(e.amount) || 0
+        return e.type === 'income' ? sum - amt : sum + amt
       }, 0)
       expenseSummary = {
-        count: expenseRes.data.length,
+        count: activeExpenses.length,
         totalAmount: Math.round(totalAmount * 100) / 100
       }
     } catch (e) {

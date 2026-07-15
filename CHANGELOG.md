@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## V3.2 - 头像、账单计算与权限修复（2026-07-15）
+
+### 头像系统修复
+- **根因**：`saveProfile` 将 `getTempFileURL` 生成的临时 HTTPS URL 写入了数据库，签名过期后全部页面报 403
+- 增加 `hasNewAvatar` 标记追踪用户是否选择了新头像，未选新头像时回退到数据库中的 `cloud://` fileID
+- 上传判定改为反向检测：不是 `cloud://` 且不是过期 temp URL → 即本地路径需上传，兼容不同 `chooseAvatar` 返回格式
+- `loadTrip` / `members` 页面：`cloud://` fileID 批量转 temp URL 后标记 `fromFileMap`，避免新鲜 temp URL 被误判为过期
+- 全部头像 `<image>` 标签增加 `binderror` 降级处理
+- `utils/user.js` 新增 `isCloudFileID()` / `isCloudTempUrl()`，删除零调用的 `getDisplayAvatar` / `batchConvertAvatars` / `resolveAvatarUrl`
+- `app.json` 补充 `permission.scope.userLocation` 声明（行程选址 `wx.chooseLocation` 必需）
+
+### 金额计算口径统一
+- `getExpenses` 云函数 `totalAmount` 修复：改为 `支出总额 - 入账总额`，与前端 `calculateTotalExpense` 一致
+- `getTripDetail` 云函数 `expenseSummary.totalAmount` 同样修复，并增加排除已删除账单
+- 全项目统一：`expense` 计入、`income` 扣减、已删除跳过
+
+### 死代码清理
+- 删除 `utils/money.js`（全项目零引用）
+- `budget.js` 删除 `refund` 类型遗留分支，正式类型仅 `expense` / `income`
+
+### 结算防御性校验
+- `calculateSettlement` 云函数增加空参与人账单检测：发现异常账单时返回明确错误 + 异常账单 ID 列表，不再静默跳过
+
+### 本次修改文件
+- `miniprogram/app.json`
+- `miniprogram/utils/user.js`
+- `miniprogram/utils/budget.js`
+- `miniprogram/utils/money.js`（删除）
+- `miniprogram/pages/tripWorkspace/tripWorkspace.js`
+- `miniprogram/pages/tripWorkspace/tripWorkspace.wxml`
+- `miniprogram/pages/members/members.js`
+- `miniprogram/pages/members/members.wxml`
+- `cloudfunctions/getExpenses/index.js`
+- `cloudfunctions/getTripDetail/index.js`
+- `cloudfunctions/calculateSettlement/index.js`
+
+### 需要重新部署的云函数
+- `getExpenses`、`getTripDetail`、`calculateSettlement`
+
+---
+
 ## V3.0 - 地图行程与预算管理升级（开发中）
 
 ### 修改时间
