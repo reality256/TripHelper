@@ -4,7 +4,7 @@
   <!-- 顶部旅行信息 -->
   <view class="top-bar">
     <view class="top-name">{{trip.name}}</view>
-    <view class="top-meta">📍 {{trip.destination}} · 📅 {{trip.startDate}} - {{trip.endDate}} · {{memberCount}}人</view>
+    <view class="top-meta"> {{trip.destination}} · {{trip.startDate}} - {{trip.endDate}} · {{memberCount}}人</view>
   </view>
 
   <!-- 内容区 -->

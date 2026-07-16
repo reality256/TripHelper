@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## V3.3 - 分类预算暂缓与文档补充（2026-07-16）
+
+### 分类预算：暂缓上线，保留接口
+- **决策**：分类预算（按餐饮/交通/住宿/门票/购物/其他设置独立预算上限）暂不上线
+- **原因**：当前阶段总预算已满足核心需求，分类预算的 UI 和交互投入产出比不高
+- **保留内容**：
+  - `utils/budget.js` 中 `calculateCategoryCosts()` 和 `calculateCategoryBudgetStats()` 保留
+  - `utils/expenseCategory.js` 中 6 种分类 key/label 定义保留
+  - `trips.budget.categoryBudgets` 数据结构设计保留在 V3 spec §8.5
+  - `updateTripBudget` 云函数预留扩展点（当前仅处理 `totalBudget`）
+- **后续启用成本**：页面增加 6 个分类输入框 + 云函数扩展 1 个字段 + 预算卡片增加分类进度列表
+
+### 文档补充
+- 新增 `spec/V3-2_SPEC.md`：完整记录 V3.2 头像系统修复根因、金额口径统一、死代码清理、结算防御性校验的决策和教训
+- 更新 `spec/V3_SPEC.md`：顶部新增版本完成状态表，标记分类预算为暂缓，P0/P1 列表同步更新
+
+---
+
 ## V3.2 - 头像、账单计算与权限修复（2026-07-15）
 
 ### 头像系统修复
