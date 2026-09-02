@@ -4,7 +4,9 @@ var tripService = require('../../services/tripService')
 Page({
   data: {
     trips: [],
-    hasCheckedAutoRedirect: false
+    hasCheckedAutoRedirect: false,
+    loading: false,
+    error: ''
   },
 
   onLoad: function (options) {
@@ -19,8 +21,8 @@ Page({
   },
 
   onShow: function () {
-    // 非首次加载时，正常显示旅行列表供用户手动选择
-    if (this.data.hasCheckedAutoRedirect) {
+    // 非首次加载时，正常显示旅行列表供用户手动选择（加载中跳过，避免与 onLoad 重复请求）
+    if (this.data.hasCheckedAutoRedirect && !this.data.loading) {
       this.loadTrips()
     }
   },
@@ -28,35 +30,46 @@ Page({
   // V2：首次启动时检查是否需要自动跳转
   checkAutoRedirect: function () {
     var that = this
+    this.setData({ loading: true, error: '' })
     tripService.getMyTrips().then(function (data) {
       var trips = data.trips || []
 
       if (trips.length > 0) {
         // 已有旅行：自动跳转到最近旅行（云函数已按 updatedAt 倒序）
         var recentTrip = trips[0]
-        that.setData({ hasCheckedAutoRedirect: true })
+        that.setData({ hasCheckedAutoRedirect: true, loading: false })
 
         wx.navigateTo({
           url: '/pages/tripWorkspace/tripWorkspace?tripId=' + recentTrip._id
         })
       } else {
         // 无旅行：留在首页
-        that.setData({ hasCheckedAutoRedirect: true, trips: [] })
+        that.setData({ hasCheckedAutoRedirect: true, trips: [], loading: false })
       }
     }).catch(function (err) {
       console.error('[index] 自动跳转检查失败:', err)
-      that.setData({ hasCheckedAutoRedirect: true })
+      that.setData({ hasCheckedAutoRedirect: true, loading: false, error: err.message || '旅行列表加载失败' })
       // 失败时也留在首页
     })
   },
 
   loadTrips: function () {
     var that = this
+    this.setData({ loading: true, error: '' })
     tripService.getMyTrips().then(function (data) {
-      that.setData({ trips: data.trips })
+      that.setData({ trips: data.trips, loading: false })
     }).catch(function (err) {
       console.error('[index] 加载旅行列表失败:', err)
+      that.setData({ loading: false, error: err.message || '旅行列表加载失败' })
     })
+  },
+
+  retryLoad: function () {
+    if (this.data.hasCheckedAutoRedirect) {
+      this.loadTrips()
+    } else {
+      this.checkAutoRedirect()
+    }
   },
 
   goCreateTrip: function () {

@@ -17,6 +17,7 @@ exports.main = async (event) => {
   var numAmount = Number(amount)
   if (!amount || isNaN(numAmount) || numAmount <= 0) return { success: false, data: null, message: '金额必须为正数' }
   if (!/^\d+(\.\d{1,2})?$/.test(String(amount))) return { success: false, data: null, message: '金额最多保留两位小数' }
+  if (numAmount > 99999999) return { success: false, data: null, message: '金额超出上限' }
   if (!payerOpenid) return { success: false, data: null, message: '请选择付款人' }
   if (!participantOpenids || participantOpenids.length === 0) return { success: false, data: null, message: '请至少选择一位分摊成员' }
 

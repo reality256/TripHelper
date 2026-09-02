@@ -46,6 +46,10 @@
     <!-- 付款人 / 收款人 -->
     <view class="form-group">
       <view class="form-label">{{type === 'income' ? '收款人' : '付款人'}}</view>
+      <view wx:if="{{memberError}}" style="display:flex;align-items:center;justify-content:space-between;font-size:24rpx;color:#999;margin-bottom:16rpx;">
+        <text>{{memberError}}</text>
+        <text style="color:var(--primary);padding:8rpx 16rpx;" bindtap="retryLoadMembers">重试</text>
+      </view>
       <view class="member-select ui-member-select">
         <view class="member-tag ui-member-tag"
               wx:for="{{memberList}}" wx:key="openid"
@@ -81,5 +85,5 @@
     </view>
   </view>
 
-  <view class="btn-primary" bindtap="onSubmit">确认添加</view>
+  <view class="btn-primary {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">{{submitting ? '提交中...' : (isEdit ? '保存修改' : '确认添加')}}</view>
 </view>

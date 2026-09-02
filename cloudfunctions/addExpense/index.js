@@ -33,6 +33,10 @@ exports.main = async (event) => {
   if (!/^\d+(\.\d{1,2})?$/.test(String(amount))) {
     return { success: false, data: null, message: '金额最多保留两位小数' }
   }
+  // 金额上限（与前端 utils/amount.js 一致，防止超大金额污染统计与结算）
+  if (numAmount > 99999999) {
+    return { success: false, data: null, message: '金额超出上限' }
+  }
   if (!payerOpenid) {
     return { success: false, data: null, message: '请选择付款人' }
   }
@@ -47,6 +51,10 @@ exports.main = async (event) => {
 
     if (!trip) {
       return { success: false, data: null, message: '旅行不存在' }
+    }
+
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
     }
 
     if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {

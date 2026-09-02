@@ -21,7 +21,9 @@ Page({
     perPersonBudget: '',
     perPersonCurrent: '',
     currentExpense: '0.00',
-    clearing: false
+    clearing: false,
+    loadError: '',
+    budgetInputFocused: false
   },
 
   onLoad: function (options) {
@@ -32,15 +34,15 @@ Page({
   },
 
   onShow: function () {
-    // 从其他页面返回时刷新账单数据
-    if (this.data.tripId && !this.data.loading) {
+    // 从其他页面返回时刷新账单数据（初始加载失败时不刷新）
+    if (this.data.tripId && !this.data.loading && !this.data.loadError) {
       this.loadExpenseOnly()
     }
   },
 
   loadData: function () {
     var that = this
-    this.setData({ loading: true })
+    this.setData({ loading: true, loadError: '' })
 
     tripService.getTripDetail(this.data.tripId).then(function (data) {
       var trip = data.trip
@@ -72,9 +74,13 @@ Page({
       that.loadExpenseOnly()
     }).catch(function (err) {
       console.error('[budget-setting] 加载失败:', err)
-      that.setData({ loading: false })
-      wx.showToast({ title: err.message || '加载失败', icon: 'none' })
+      // 显示错误态 + 重试，避免渲染空白可提交表单
+      that.setData({ loading: false, loadError: err.message || '加载失败' })
     })
+  },
+
+  retryLoad: function () {
+    this.loadData()
   },
 
   // 加载账单并计算总花费（复用 budgetUtils）
@@ -98,6 +104,13 @@ Page({
     var num = Number(budgetVal) || 0
     var count = this.data.memberCount || 1
     return num > 0 ? (num / count).toFixed(2) : ''
+  },
+
+  // 首次聚焦后复位，避免每次渲染重复弹键盘
+  onBudgetInputFocus: function () {
+    if (!this.data.budgetInputFocused) {
+      this.setData({ budgetInputFocused: true })
+    }
   },
 
   onBudgetInput: function (e) {

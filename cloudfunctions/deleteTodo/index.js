@@ -16,6 +16,7 @@ exports.main = async (event) => {
     const tripRes = await db.collection('trips').doc(tripId).get()
     const trip = tripRes.data
     if (!trip) return { success: false, data: null, message: '旅行不存在' }
+    if (trip.status === 'dissolved') return { success: false, data: null, message: '该旅行已解散' }
     if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
       return { success: false, data: null, message: '你没有权限操作该旅行' }
     }

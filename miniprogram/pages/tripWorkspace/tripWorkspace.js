@@ -79,6 +79,7 @@ Page({
     // 设置模块
     myTrips: [],
     myTripsLoaded: false,
+    myTripsError: '',
     myOpenid: '',
 
     // 预算模块
@@ -131,17 +132,27 @@ Page({
   loadTrip: function () {
     var that = this
     this.setData({ loading: true })
-    tripService.getTripDetail(this.data.tripId).then(function (data) {
-      // 建立 openid → 昵称 映射
-      var memberMap = {}
-      var members = data.members || []
-      for (var i = 0; i < members.length; i++) {
-        memberMap[members[i].openid] = members[i].nickName
-      }
+    // 等待用户初始化完成（login 冷启动可能晚于详情返回，否则创建者权限入口与资料弹窗缺失）
+    var appReady = getApp()._userReady
+    var doLoad = function () {
+      tripService.getTripDetail(that.data.tripId).then(function (data) {
+        // 建立 openid → 昵称 映射
+        var memberMap = {}
+        var members = data.members || []
+        for (var i = 0; i < members.length; i++) {
+          memberMap[members[i].openid] = members[i].nickName
+        }
+        // 合并已退出成员昵称（账单付款人/待办负责人展示用，避免显示「未知」）
+        var formerMembers = data.formerMembers || []
+        for (var f = 0; f < formerMembers.length; f++) {
+          if (!memberMap[formerMembers[f].openid]) {
+            memberMap[formerMembers[f].openid] = formerMembers[f].nickName
+          }
+        }
 
-      var app = getApp()
-      var user = app.globalData.user
-      var myOpenid = app.globalData.openid || ''
+        var app = getApp()
+        var user = app.globalData.user
+        var myOpenid = app.globalData.openid || ''
 
       // 收集所有 cloud:// 文件 ID，准备批量转换（去重）
       var cloudFileIds = []
@@ -242,11 +253,18 @@ Page({
           }, 600)
         }
       })
-    }).catch(function (err) {
-      console.error('[tripWorkspace] 加载失败:', err)
-      that.setData({ loading: false })
-      wx.showToast({ title: err.message || '加载失败', icon: 'none' })
-    })
+      }).catch(function (err) {
+        console.error('[tripWorkspace] 加载失败:', err)
+        that.setData({ loading: false })
+        wx.showToast({ title: err.message || '加载失败', icon: 'none' })
+      })
+    }
+    // 登录失败（appReady resolve 为 null）也继续加载
+    if (appReady) {
+      appReady.then(doLoad, doLoad)
+    } else {
+      doLoad()
+    }
   },
 
   // 切换 tab（退出管理模式；数据懒加载：首次进入才拉取，之后切换不刷新，靠下拉刷新）
@@ -316,7 +334,6 @@ Page({
 
       // 格式化行程项
       var formatted = list.map(function (item) {
-        var hasEndTime = !!(item.endTime)
         var timeText = ''
         if (item.startTime && item.endTime) {
           timeText = item.startTime + ' - ' + item.endTime
@@ -331,6 +348,7 @@ Page({
 
         return {
           _id: item._id,
+          createdBy: item.createdBy,
           title: item.title,
           location: scheduleUtils.getDisplayLocation(item),
           locationAddress: scheduleUtils.getDisplayAddress(item),
@@ -395,10 +413,25 @@ Page({
     this.loadItinerary()
   },
 
-  // 点击行程项跳转编辑
+  // 点击行程项跳转编辑（权限门控与云函数一致：行程创建者或旅行创建者）
   goEditItinerary: function (e) {
     var id = e.currentTarget.dataset.id
     if (!id) return
+    var row = null
+    var groups = this.data.itineraryGroups || []
+    for (var gi = 0; gi < groups.length && !row; gi++) {
+      var items = groups[gi].items || []
+      for (var ii = 0; ii < items.length; ii++) {
+        if (items[ii]._id === id) {
+          row = items[ii]
+          break
+        }
+      }
+    }
+    if (row && row.createdBy !== this.data.myOpenid && (!this.data.trip || this.data.trip.creatorOpenid !== this.data.myOpenid)) {
+      wx.showToast({ title: '仅创建者可编辑该行程', icon: 'none' })
+      return
+    }
     wx.navigateTo({ url: '/pages/addItinerary/addItinerary?tripId=' + this.data.tripId + '&itineraryId=' + id })
   },
 
@@ -727,15 +760,22 @@ Page({
       var others = (data.trips || []).filter(function (t) {
         return t._id !== that.data.tripId
       })
-      that.setData({ myTrips: others, myTripsLoaded: true })
+      that.setData({ myTrips: others, myTripsLoaded: true, myTripsError: '' })
       if (silent) that.finishPullDown()
     }).catch(function (err) {
       console.error('[tripWorkspace] 我的旅行加载失败:', err)
       if (silent) {
         wx.showToast({ title: '我的旅行刷新失败', icon: 'none' })
         that.finishPullDown()
+      } else {
+        that.setData({ myTripsError: err.message || '我的旅行加载失败' })
       }
     })
+  },
+
+  retryLoadMyTrips: function () {
+    this.setData({ myTripsError: '' })
+    this.loadMyTrips()
   },
 
   copyInviteCode: function () {
@@ -903,6 +943,10 @@ Page({
       return
     }
 
+    // 提交锁：防止连点重复上传头像/重复保存
+    if (this._savingProfile) return
+    this._savingProfile = true
+
     wx.showLoading({ title: '保存中...' })
 
     var doSave = function (finalAvatarUrl) {
@@ -912,6 +956,7 @@ Page({
       }).then(function (res) {
         wx.hideLoading()
         wx.showToast({ title: '保存成功', icon: 'success' })
+        that._savingProfile = false
 
         var app = getApp()
         app.globalData.user = res.user
@@ -924,6 +969,7 @@ Page({
         that.loadTrip()
       }).catch(function (err) {
         wx.hideLoading()
+        that._savingProfile = false
         wx.showToast({ title: err.message || '保存失败', icon: 'none' })
       })
     }
@@ -937,17 +983,16 @@ Page({
       var isLocalPath = avatarUrl && !userUtils.isCloudFileID(avatarUrl) && !userUtils.isCloudTempUrl(avatarUrl)
 
       if (isLocalPath) {
-        console.log('[tripWorkspace] 上传新头像, 本地路径:', avatarUrl)
         var cloudPath = 'avatars/' + (getApp().globalData.openid || 'user') + '_' + Date.now() + '.png'
         wx.cloud.uploadFile({
           cloudPath: cloudPath,
           filePath: avatarUrl
         }).then(function (uploadRes) {
-          console.log('[tripWorkspace] 头像上传成功, fileID:', uploadRes.fileID)
           doSave(uploadRes.fileID)
         }).catch(function (err) {
           console.error('[tripWorkspace] 头像上传失败:', err)
           wx.hideLoading()
+          that._savingProfile = false
           wx.showToast({ title: '头像上传失败，请重试', icon: 'none' })
         })
       } else if (userUtils.isCloudFileID(avatarUrl)) {
@@ -964,9 +1009,9 @@ Page({
       if (userUtils.isCloudFileID(storedAvatar)) {
         doSave(storedAvatar)
       } else if (userUtils.isCloudTempUrl(storedAvatar)) {
-        // 旧数据中已存在过期 temp URL → 不更新头像字段，等用户下次主动更换
+        // 旧数据中已存在过期 temp URL → 不写回头像字段（云端只接受 cloud://，写回会被拒绝）
         console.warn('[tripWorkspace] 检测到数据库中为过期临时 URL，跳过头像更新')
-        doSave(storedAvatar)
+        doSave('')
       } else {
         doSave(avatarUrl)
       }

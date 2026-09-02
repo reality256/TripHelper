@@ -29,6 +29,15 @@ exports.main = async (event) => {
     return { success: false, data: null, message: '请选择日期' }
   }
 
+  // 校验时间格式（HH:mm）
+  const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+  if (startTime && !TIME_RE.test(String(startTime))) {
+    return { success: false, data: null, message: '开始时间格式不正确' }
+  }
+  if (endTime && !TIME_RE.test(String(endTime))) {
+    return { success: false, data: null, message: '结束时间格式不正确' }
+  }
+
   // 校验结束时间不早于开始时间
   if (startTime && endTime) {
     const partsA = String(startTime).split(':')
@@ -40,6 +49,16 @@ exports.main = async (event) => {
     }
   }
 
+  // 校验坐标范围（含 0 合法值；非法输入直接拒绝，不静默写 0,0）
+  var numLat = latitude === undefined || latitude === '' ? null : Number(latitude)
+  var numLng = longitude === undefined || longitude === '' ? null : Number(longitude)
+  if (numLat !== null && (isNaN(numLat) || numLat < -90 || numLat > 90)) {
+    return { success: false, data: null, message: '纬度坐标无效' }
+  }
+  if (numLng !== null && (isNaN(numLng) || numLng < -180 || numLng > 180)) {
+    return { success: false, data: null, message: '经度坐标无效' }
+  }
+
   try {
     // 1. 查询旅行并校验权限
     const tripRes = await db.collection('trips').doc(tripId).get()
@@ -47,6 +66,10 @@ exports.main = async (event) => {
 
     if (!trip) {
       return { success: false, data: null, message: '旅行不存在' }
+    }
+
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
     }
 
     if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
@@ -61,8 +84,8 @@ exports.main = async (event) => {
       location: (locationName || location || '').trim(),
       locationName: locationName || location || '',
       locationAddress: locationAddress || '',
-      latitude: Number(latitude) || 0,
-      longitude: Number(longitude) || 0,
+      latitude: numLat === null ? 0 : numLat,
+      longitude: numLng === null ? 0 : numLng,
       startTime: startTime || '',
       endTime: endTime || '',
       note: note || '',

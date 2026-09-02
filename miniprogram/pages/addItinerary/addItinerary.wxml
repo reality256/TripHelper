@@ -3,6 +3,13 @@
   <!-- 加载中 -->
   <view class="loading ui-loading" wx:if="{{loading}}"><text>加载中...</text></view>
 
+  <!-- 编辑模式加载失败：禁止提交，提供重试 -->
+  <view class="error-state ui-error" wx:elif="{{loadError}}">
+    <view class="error-state-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
+    <view class="error-state-text">{{loadError}}</view>
+    <view class="btn-secondary" bindtap="loadItineraryDetail">重试</view>
+  </view>
+
   <block wx:else>
   <view class="page-title">{{isEdit ? '编辑行程' : '添加行程'}}</view>
 
@@ -51,6 +58,6 @@
     </view>
   </view>
 
-  <view class="btn-primary" bindtap="onSubmit">{{isEdit ? '保存修改' : '确认添加'}}</view>
+  <view class="btn-primary {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">{{submitting ? '提交中...' : (isEdit ? '保存修改' : '确认添加')}}</view>
   </block>
 </view>

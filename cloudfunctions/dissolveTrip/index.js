@@ -7,6 +7,7 @@ cloud.init({
 })
 
 const db = cloud.database()
+const _ = db.command
 
 exports.main = async (event) => {
   const wxContext = cloud.getWXContext()
@@ -41,10 +42,11 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '该旅行已经解散' }
     }
 
-    // 软删除：设置状态为 dissolved
+    // 软删除：设置状态为 dissolved，同时清除邀请码（防止解散后仍可被加入）
     await db.collection('trips').doc(tripId).update({
       data: {
         status: 'dissolved',
+        inviteCode: _.remove(),
         dissolvedAt: new Date(),
         dissolvedBy: openid,
         updatedAt: new Date()

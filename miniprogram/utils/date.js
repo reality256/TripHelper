@@ -1,10 +1,4 @@
 // utils/date.js
-function getToday() {
-  var d = new Date()
-  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
-}
-function pad(n) { return String(n).padStart(2, '0') }
-
 /**
  * 比较两个 HH:mm 格式的时间
  * @param {string} timeA - 格式 HH:mm
@@ -35,7 +29,6 @@ function isEndTimeBeforeStartTime(startTime, endTime) {
 }
 
 module.exports = {
-  getToday: getToday,
   compareTime: compareTime,
   isEndTimeBeforeStartTime: isEndTimeBeforeStartTime
 }

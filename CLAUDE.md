@@ -39,7 +39,7 @@
 - `miniprogram/services/cloudService.js` — 云函数调用基础封装
 - `miniprogram/services/*Service.js` — 各模块 API 封装
 
-### 云函数（24 个）
+### 云函数（25 个）
 关键云函数见 `cloudfunctions/` 目录，需关注：
 - `calculateSettlement` — AA 结算（贪心算法，内部用分）
 - `addExpense` / `updateExpense` / `deleteExpense` / `getExpenses` — 账单 CRUD

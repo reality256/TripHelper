@@ -15,7 +15,8 @@ Page({
     summary: { totalDistance: '', totalTime: '', locationCount: 0 },
     missingCount: 0,
     hasRoute: false,
-    errorMsg: ''
+    errorMsg: '',
+    selectedDateIndex: 0
   },
 
   onLoad: function (options) {
@@ -25,11 +26,19 @@ Page({
     }
   },
 
+  // 请求代际：每次数据/日期刷新递增，异步回调比对序号丢弃过期响应
+  nextReqSeq: function () {
+    this._mapReqSeq = (this._mapReqSeq || 0) + 1
+    return this._mapReqSeq
+  },
+
   loadData: function () {
     var that = this
     this.setData({ loading: true, errorMsg: '' })
+    var seq = this.nextReqSeq()
 
     itineraryService.getItinerary(this.data.tripId).then(function (data) {
+      if (seq !== that._mapReqSeq) return  // 过期请求，丢弃
       var list = data.itinerary || []
 
       // 收集日期
@@ -45,19 +54,31 @@ Page({
 
       // 默认选中第一个日期
       var activeDate = that.data.selectedDate || (dates.length > 0 ? dates[0] : '')
-      that.setData({ dates: dates, selectedDate: activeDate })
-      that.renderMap(list, activeDate)
+      that.setData({ dates: dates, selectedDate: activeDate, selectedDateIndex: dates.indexOf(activeDate) })
+      that.renderMap(list, activeDate, seq)
     }).catch(function (err) {
       that.setData({ loading: false, errorMsg: err.message || '加载失败' })
     })
   },
 
-  renderMap: function (allSchedules, activeDate) {
+  renderMap: function (allSchedules, activeDate, seq) {
     var that = this
+    // 重置摘要与路线（无路线/空日期不残留上一日期的距离时长）
+    this.setData({
+      'summary.totalDistance': '',
+      'summary.totalTime': '',
+      'summary.locationCount': 0,
+      missingCount: 0,
+      hasRoute: false,
+      schedules: [],
+      markers: [],
+      polyline: [],
+      points: []
+    })
     // 过滤当天行程
     var daySchedules = allSchedules.filter(function (s) { return s.date === activeDate })
     if (daySchedules.length === 0) {
-      this.setData({ loading: false, markers: [], polyline: [], points: [], hasRoute: false })
+      this.setData({ loading: false, markers_for_include: [] })
       return
     }
 
@@ -101,7 +122,7 @@ Page({
         'summary.totalDistance': approxInfo.total + ' km（直线距离，正在计算驾车路线...）',
         'summary.totalTime': mapUtils.estimateDriveTime(approxInfo.total)
       })
-      that.fetchRealDistances(valid)
+      that.fetchRealDistances(valid, seq)
     }
 
     // 计算地图视野
@@ -123,7 +144,7 @@ Page({
     this.setData({
       loading: false,
       markers: markers,
-      polyline: hasRoute ? [{ points: points, color: '#2E8B5788', width: 6, arrowLine: true }] : [],
+      polyline: hasRoute ? [{ points: points, color: '#2E8B57', width: 6, arrowLine: true }] : [],
       points: points,
       mapLatitude: mapCenter.latitude,
       mapLongitude: mapCenter.longitude,
@@ -137,12 +158,12 @@ Page({
 
   onDateChange: function (e) {
     var date = this.data.dates[e.detail.value]
-    this.setData({ selectedDate: date })
+    this.setData({ selectedDate: date, selectedDateIndex: e.detail.value })
     this.loadMapForDate(date)
   },
 
-  // 逐对请求真实驾车距离 + 路线 polyline
-  fetchRealDistances: function (validSchedules) {
+  // 逐对请求真实驾车距离 + 路线 polyline（seq 用于丢弃过期批次结果）
+  fetchRealDistances: function (validSchedules, seq) {
     var that = this
     var pairs = []
     for (var i = 0; i < validSchedules.length - 1; i++) {
@@ -160,8 +181,10 @@ Page({
 
     pairs.forEach(function (pair, idx) {
       itineraryService.getRouteDistance(that.data.tripId, pair.from, pair.to).then(function (res) {
-        totalDist += res.distance
-        totalDur += res.duration
+        // 防御：距离非有限数值时按失败处理，避免总和变 NaN
+        if (!res || !isFinite(Number(res.distance))) throw new Error('invalid distance')
+        totalDist += Number(res.distance)
+        totalDur += Number(res.duration) || 0
         if (res.polyline && res.polyline.length > 0) {
           allPolylines.push(res.polyline)
         }
@@ -175,6 +198,7 @@ Page({
       }).then(function () {
         done++
         if (done === pairs.length) {
+          if (seq !== that._mapReqSeq) return  // 过期批次，丢弃
           totalDist = Math.round(totalDist * 10) / 10
           totalDur = Math.round(totalDur)
 
@@ -202,8 +226,10 @@ Page({
 
   loadMapForDate: function (date) {
     var that = this
+    var seq = this.nextReqSeq()
     itineraryService.getItinerary(this.data.tripId).then(function (data) {
-      that.renderMap(data.itinerary || [], date)
+      if (seq !== that._mapReqSeq) return  // 过期请求，丢弃
+      that.renderMap(data.itinerary || [], date, seq)
     })
   }
 })

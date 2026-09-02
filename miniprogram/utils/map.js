@@ -21,8 +21,10 @@ function normalizeLocationResult(loc) {
  * @returns {Array}
  */
 function getValidScheduleLocations(schedules) {
+  // 显式数值校验：纬度为 0（赤道）或经度为 0（本初子午线）也是有效地点
   return schedules.filter(function (s) {
-    return !!(s.latitude && s.longitude)
+    return typeof s.latitude === 'number' && !isNaN(s.latitude) &&
+           typeof s.longitude === 'number' && !isNaN(s.longitude)
   })
 }
 
@@ -88,13 +90,6 @@ function buildRoutePolyline(schedules) {
 }
 
 /**
- * 检查是否有足够地点生成路线（>= 2 个有效点）
- */
-function hasEnoughForRoute(schedules) {
-  return getValidScheduleLocations(schedules).length >= 2
-}
-
-/**
  * 计算两点直线距离（Haversine 公式）
  * @returns {number} 距离，单位 km
  */
@@ -151,7 +146,6 @@ module.exports = {
   getMissingLocationCount: getMissingLocationCount,
   buildMapMarkers: buildMapMarkers,
   buildRoutePolyline: buildRoutePolyline,
-  hasEnoughForRoute: hasEnoughForRoute,
   calculateDistance: calculateDistance,
   calculateRouteDistances: calculateRouteDistances,
   estimateDriveTime: estimateDriveTime

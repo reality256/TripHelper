@@ -25,7 +25,8 @@ Page({
     payerOpenid: '',
     participantOpenids: [],
     splitHint: '',
-    submitting: false
+    submitting: false,
+    memberError: ''
   },
 
   onLoad: function (options) {
@@ -89,8 +90,21 @@ Page({
       if (cb) cb()
     }).catch(function (err) {
       console.error('[addExpense] 加载成员失败:', err)
+      if (that.data.isEdit) {
+        // 编辑模式：成员加载失败中断回显，避免看不到分摊人却可提交
+        wx.hideLoading()
+        wx.showToast({ title: '成员加载失败，请稍后重试', icon: 'none' })
+        setTimeout(function () { wx.navigateBack() }, 1500)
+        return
+      }
+      that.setData({ memberError: '成员加载失败' })
       if (cb) cb()
     })
+  },
+
+  retryLoadMembers: function () {
+    this.setData({ memberError: '' })
+    this.loadMembers()
   },
 
   refreshMemberList: function () {

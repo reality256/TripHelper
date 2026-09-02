@@ -1,19 +1,5 @@
 // utils/user.js
-// 统一处理用户昵称和头像的默认值显示
-
-/**
- * 获取用户显示名称
- * 优先级：user.nickName → 旅友+openid后4位 → 未知用户
- */
-function getDisplayName(user) {
-  if (user && user.nickName && user.nickName !== '微信用户') {
-    return user.nickName
-  }
-  if (user && user.openid) {
-    return '旅友' + String(user.openid).slice(-4).toUpperCase()
-  }
-  return '未知用户'
-}
+// 统一处理用户头像 URL 判定
 
 /**
  * 判断头像 URL 是否为 cloud:// 格式的永久文件 ID
@@ -34,7 +20,6 @@ function isCloudTempUrl(url) {
 }
 
 module.exports = {
-  getDisplayName: getDisplayName,
   isCloudFileID: isCloudFileID,
   isCloudTempUrl: isCloudTempUrl
 }

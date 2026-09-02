@@ -43,6 +43,10 @@ exports.main = async (event) => {
       updatedAt: new Date()
     }
     if (avatarUrl !== undefined && avatarUrl !== '') {
+      // 服务端校验：只接受 cloud:// fileID（V3.2 铁律：DB 不存 temp URL）
+      if (typeof avatarUrl !== 'string' || avatarUrl.indexOf('cloud://') !== 0 || avatarUrl.length > 300) {
+        return { success: false, data: null, message: '头像格式非法' }
+      }
       updateData.avatarUrl = avatarUrl
     }
 

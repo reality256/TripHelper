@@ -6,11 +6,11 @@
   <view class="card">
     <view class="form-group">
       <view class="form-label">旅行名称</view>
-      <input class="form-input" placeholder="例如：五一川西自驾" value="{{name}}" bindinput="onNameInput" maxlength="30"/>
+      <input class="form-input" placeholder="例如：暑假青甘大环线自驾游" value="{{name}}" bindinput="onNameInput" maxlength="30"/>
     </view>
     <view class="form-group">
       <view class="form-label">目的地</view>
-      <input class="form-input" placeholder="例如：四川·成都" value="{{destination}}" bindinput="onDestinationInput" maxlength="50"/>
+      <input class="form-input" placeholder="例如：青海甘肃" value="{{destination}}" bindinput="onDestinationInput" maxlength="50"/>
     </view>
     <view class="form-group">
       <view class="form-label">开始日期</view>
@@ -26,5 +26,5 @@
     </view>
   </view>
 
-  <view class="btn-primary" bindtap="onSubmit">确认创建</view>
+  <view class="btn-primary {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">{{submitting ? '创建中...' : '确认创建'}}</view>
 </view>

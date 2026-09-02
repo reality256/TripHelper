@@ -27,30 +27,14 @@ exports.main = async (event) => {
     let user = null
 
     if (userRes.data.length > 0) {
-      // 用户已存在，更新昵称和头像
+      // 用户已存在：只读取，资料更新统一走 updateUserProfile（避免双写入入口）
       user = userRes.data[0]
-
-      const updateData = {}
-      if (event.nickName !== undefined && event.nickName !== '') {
-        updateData.nickName = event.nickName
-      }
-      if (event.avatarUrl !== undefined && event.avatarUrl !== '') {
-        updateData.avatarUrl = event.avatarUrl
-      }
-
-      if (Object.keys(updateData).length > 0) {
-        updateData.updatedAt = new Date()
-        await db.collection('users').doc(user._id).update({ data: updateData })
-        user = Object.assign({}, user, updateData)
-      }
     } else {
-      // 新用户，创建记录：不设昵称则自动编号
-      var countRes = await db.collection('users').count()
-      var defaultNick = '旅友' + (countRes.total + 1)
+      // 新用户：默认昵称用 openid 后 4 位（避免 count() 并发重名）
       const newUser = {
         openid,
-        nickName: event.nickName || defaultNick,
-        avatarUrl: event.avatarUrl || '',
+        nickName: '旅友' + openid.slice(-4).toUpperCase(),
+        avatarUrl: '',
         profileCompleted: false,
         createdAt: new Date(),
         updatedAt: new Date()

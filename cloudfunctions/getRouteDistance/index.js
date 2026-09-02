@@ -4,7 +4,8 @@ const cloud = require('wx-server-sdk')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
-const MAP_KEY = '4X5BZ-EWCWN-PXKFB-S6FSS-QWZMV-32B4P'
+// 地图 Key 通过云开发环境变量注入（控制台配置 MAP_KEY），不再硬编码进仓库
+const MAP_KEY = process.env.MAP_KEY || ''
 
 exports.main = async (event) => {
   const wxContext = cloud.getWXContext()
@@ -22,6 +23,9 @@ exports.main = async (event) => {
     const trip = tripRes.data
     if (!trip || !trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
       return { success: false, data: null, message: '你没有权限操作该旅行' }
+    }
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
     }
   } catch (e) {
     console.error('[getRouteDistance] 行程校验失败:', e.message || e)
@@ -45,6 +49,9 @@ exports.main = async (event) => {
 
 // 用 Node.js 原生 https 模块请求（云函数环境通用）
 async function callWithHttp(fromStr, toStr) {
+  if (!MAP_KEY) {
+    return { success: false, data: null, message: '地图服务未配置（缺少 MAP_KEY 环境变量）' }
+  }
   var https = require('https')
   var url = 'https://apis.map.qq.com/ws/direction/v1/driving/?from=' + fromStr + '&to=' + toStr + '&key=' + MAP_KEY + '&get_polyline=1'
 

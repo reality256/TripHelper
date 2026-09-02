@@ -6,7 +6,8 @@ Page({
   data: {
     tripId: '', title: '', note: '',
     members: [], memberList: [], assigneeOpenids: [],
-    submitting: false
+    submitting: false,
+    memberError: ''
   },
 
   onLoad: function (options) {
@@ -27,8 +28,13 @@ Page({
       that.refreshMemberList()
     }).catch(function (err) {
       console.error('[addTodo] 加载成员失败:', err)
-      wx.showToast({ title: '加载成员失败', icon: 'none' })
+      that.setData({ memberError: '成员加载失败' })
     })
+  },
+
+  retryLoadMembers: function () {
+    this.setData({ memberError: '' })
+    this.loadMembers()
   },
 
   refreshMemberList: function () {

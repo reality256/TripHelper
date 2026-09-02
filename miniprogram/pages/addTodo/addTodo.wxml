@@ -8,6 +8,10 @@
     </view>
     <view class="form-group">
       <view class="form-label">负责人</view>
+      <view wx:if="{{memberError}}" style="display:flex;align-items:center;justify-content:space-between;font-size:24rpx;color:#999;margin-bottom:16rpx;">
+        <text>{{memberError}}</text>
+        <text style="color:var(--primary);padding:8rpx 16rpx;" bindtap="retryLoadMembers">重试</text>
+      </view>
       <view class="member-select ui-member-select">
         <view class="member-tag ui-member-tag" wx:for="{{memberList}}" wx:key="openid" data-openid="{{item.openid}}" bindtap="onToggleAssignee">
           <view class="member-check ui-member-check ui-member-check--multi {{item.isSelected ? 'checked' : ''}}"></view>
@@ -20,5 +24,5 @@
       <textarea class="form-input" style="height:120rpx;padding:16rpx 24rpx" placeholder="选填" value="{{note}}" bindinput="onNoteInput" maxlength="200"/>
     </view>
   </view>
-  <view class="btn-primary" bindtap="onSubmit">确认添加</view>
+  <view class="btn-primary {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">{{submitting ? '提交中...' : '确认添加'}}</view>
 </view>

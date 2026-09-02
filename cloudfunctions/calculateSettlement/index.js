@@ -8,6 +8,7 @@ cloud.init({
 })
 
 const db = cloud.database()
+const _ = db.command
 
 exports.main = async (event) => {
   const wxContext = cloud.getWXContext()
@@ -36,14 +37,28 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '你没有权限操作该旅行' }
     }
 
-    // 2. 查询所有账单
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
+    }
+
+    // 2. 分页查询所有账单（云函数单次 get 上限 100，需循环拉全量）
     let expenses = []
     try {
-      const expenseRes = await db.collection('expenses')
-        .where({ tripId })
-        .get()
-      // 排除已软删除的账单（兼容旧数据无 deleted 字段）
-      expenses = expenseRes.data.filter(function (e) { return !e.deleted })
+      const pageSize = 100
+      var offset = 0
+      while (true) {
+        const expenseRes = await db.collection('expenses')
+          .where({ tripId, deleted: _.neq(true) })
+          .skip(offset)
+          .limit(pageSize)
+          .get()
+        var page = expenseRes.data || []
+        expenses = expenses.concat(page)
+        if (page.length < pageSize) break
+        offset += pageSize
+      }
+      // 双保险：排除已软删除的账单（兼容 deleted 为其他真值的脏数据）
+      expenses = expenses.filter(function (e) { return !e.deleted })
     } catch (e) {
       // 集合不存在则无账单
     }
@@ -75,20 +90,29 @@ exports.main = async (event) => {
       balanceMap[oid] = { paid: 0, shouldPay: 0 }
     })
 
-    // 6. 防御性校验：检测空参与人账单（历史异常数据）
+    // 6. 防御性校验：检测异常账单（历史脏数据：空参与人/缺付款人/金额非法）
     var invalidExpenses = []
     expenses.forEach(function (exp) {
       var participants = exp.participantOpenids || []
       if (participants.length === 0) {
         invalidExpenses.push(exp._id || '(unknown)')
+        return
+      }
+      if (!exp.payerOpenid) {
+        invalidExpenses.push(exp._id || '(unknown)')
+        return
+      }
+      var cents = Math.round(Number(exp.amount) * 100)
+      if (!isFinite(cents)) {
+        invalidExpenses.push(exp._id || '(unknown)')
       }
     })
     if (invalidExpenses.length > 0) {
-      console.warn('[calculateSettlement] 发现空参与人账单:', invalidExpenses.join(', '))
+      console.warn('[calculateSettlement] 发现异常账单:', invalidExpenses.join(', '))
       return {
         success: false,
         data: { invalidExpenseIds: invalidExpenses },
-        message: '存在 ' + invalidExpenses.length + ' 笔未设置参与人的账单，请先修正或删除后再结算'
+        message: '存在 ' + invalidExpenses.length + ' 笔异常账单（未设置参与人/付款人或金额非法），请先修正或删除后再结算'
       }
     }
 

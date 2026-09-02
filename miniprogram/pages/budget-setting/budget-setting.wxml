@@ -4,6 +4,12 @@
   <text>加载中...</text>
 </view>
 
+<view class="error-state ui-error" wx:elif="{{loadError}}">
+  <view class="error-state-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
+  <view class="error-state-text">{{loadError}}</view>
+  <view class="btn-secondary" bindtap="retryLoad">重试</view>
+</view>
+
 <view class="container" wx:else>
 
   <!-- 无权限提示 -->
@@ -55,7 +61,8 @@
              value="{{totalBudget}}"
              bindinput="onBudgetInput"
              maxlength="10"
-             focus="{{!hasBudget}}"/>
+             focus="{{!hasBudget && !budgetInputFocused}}"
+             bindfocus="onBudgetInputFocus"/>
     </view>
     <view class="form-hint">例如：4000.00</view>
   </view>

@@ -23,10 +23,11 @@ App({
   },
 
   // 初始化用户：调用 login 云函数，完成用户识别和记录创建
+  // 返回 Promise 挂到 this._userReady，页面可等待初始化完成（解决冷启动竞态）
   initUser: function () {
     var that = this
 
-    wx.cloud.callFunction({
+    this._userReady = wx.cloud.callFunction({
       name: 'login',
       data: {}
     }).then(function (res) {
@@ -34,12 +35,14 @@ App({
       if (result && result.success) {
         that.globalData.openid = result.data.openid
         that.globalData.user = result.data.user
-        console.log('[app] 用户初始化完成, openid:', that.globalData.openid)
-      } else {
-        console.error('[app] 用户初始化失败:', result && result.message)
+        return result.data.user
       }
+      throw new Error((result && result.message) || '登录失败')
     }).catch(function (err) {
-      console.error('[app] login 云函数调用失败:', err)
+      console.error('[app] 用户初始化失败:', err && err.message ? err.message : err)
+      return null
     })
+
+    return this._userReady
   }
 })

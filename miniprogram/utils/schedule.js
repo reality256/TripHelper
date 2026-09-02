@@ -31,8 +31,14 @@ function sortSchedulesByTime(schedules) {
   return schedules.slice().sort(function (a, b) {
     var aStart = a.startTime || ''
     var bStart = b.startTime || ''
-    if (aStart !== bStart) return aStart < bStart ? -1 : aStart > bStart ? 1 : 0
-    return (a.createdAt || 0) < (b.createdAt || 0) ? -1 : 1
+    // 无开始时间的行程排到每日末尾（避免成为路线起点）
+    if (aStart === '' && bStart !== '') return 1
+    if (aStart !== '' && bStart === '') return -1
+    if (aStart !== bStart) return aStart < bStart ? -1 : 1
+    var aCreated = a.createdAt || 0
+    var bCreated = b.createdAt || 0
+    if (aCreated !== bCreated) return aCreated < bCreated ? -1 : 1
+    return 0  // 比较器一致律：相等必须返回 0，保证 iOS/Android 排序一致
   })
 }
 
@@ -83,35 +89,29 @@ function getScheduleStatus(schedule, now) {
 }
 
 /**
- * 判断是否"即将开始"（距开始 <= 60 分钟）
- */
-function isUpcomingSoon(schedule, now) {
-  now = now || new Date()
-  if (!schedule.startTime) return false
-  var currentMinutes = now.getHours() * 60 + now.getMinutes()
-  var parts = String(schedule.startTime).split(':')
-  var startMinutes = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0)
-  var diff = startMinutes - currentMinutes
-  return diff > 0 && diff <= 60
-}
-
-/**
  * 检测同一天内行程冲突
  * @param {Array} schedules - 同一天的行程数组（需有 startTime, endTime）
  * @returns {Array} 冲突的行程对 [{ itemA, itemB, itemAIndex, itemBIndex }, ...]
+ * 注意：itemAIndex/itemBIndex 是原 schedules 数组的下标（含无时间行程），
+ * 调用方按原数组索引消费，避免索引错位挂错冲突对象
  */
 function detectScheduleConflicts(schedules) {
   var conflicts = []
-  var valid = schedules.filter(function (s) { return s.startTime && s.endTime })
+  var validIdx = []
+  for (var i = 0; i < schedules.length; i++) {
+    if (schedules[i].startTime && schedules[i].endTime) validIdx.push(i)
+  }
 
-  for (var i = 0; i < valid.length; i++) {
-    for (var j = i + 1; j < valid.length; j++) {
-      if (isTimeOverlap(valid[i], valid[j])) {
+  for (var a = 0; a < validIdx.length; a++) {
+    for (var b = a + 1; b < validIdx.length; b++) {
+      var itemA = schedules[validIdx[a]]
+      var itemB = schedules[validIdx[b]]
+      if (isTimeOverlap(itemA, itemB)) {
         conflicts.push({
-          itemA: valid[i],
-          itemB: valid[j],
-          itemAIndex: i,
-          itemBIndex: j
+          itemA: itemA,
+          itemB: itemB,
+          itemAIndex: validIdx[a],
+          itemBIndex: validIdx[b]
         })
       }
     }
@@ -121,22 +121,6 @@ function detectScheduleConflicts(schedules) {
 
 function isTimeOverlap(a, b) {
   return a.startTime < b.endTime && b.startTime < a.endTime
-}
-
-/**
- * 获取冲突描述文案
- */
-function getConflictText(schedule, allSchedules) {
-  var that = this
-  var conflicts = allSchedules.filter(function (s) {
-    return s !== schedule && s.startTime && s.endTime && schedule.startTime && schedule.endTime && isTimeOverlap(schedule, s)
-  })
-  if (conflicts.length === 0) return ''
-  var names = conflicts.slice(0, 2).map(function (c) { return c.title || '未命名' })
-  var text = '时间冲突：与「' + names.join('」「') + '」'
-  if (conflicts.length > 2) text += '等行程'
-  text += '时间重叠'
-  return text
 }
 
 /**
@@ -151,7 +135,9 @@ function getDisplayAddress(schedule) {
 }
 
 function hasLocation(schedule) {
-  return !!(schedule.latitude && schedule.longitude)
+  // 显式数值校验：纬度/经度为合法 0 时也是有效地点（赤道/本初子午线）
+  return typeof schedule.latitude === 'number' && !isNaN(schedule.latitude) &&
+         typeof schedule.longitude === 'number' && !isNaN(schedule.longitude)
 }
 
 module.exports = {
@@ -159,9 +145,7 @@ module.exports = {
   sortSchedulesByTime: sortSchedulesByTime,
   addDailyScheduleIndex: addDailyScheduleIndex,
   getScheduleStatus: getScheduleStatus,
-  isUpcomingSoon: isUpcomingSoon,
   detectScheduleConflicts: detectScheduleConflicts,
-  getConflictText: getConflictText,
   getDisplayLocation: getDisplayLocation,
   getDisplayAddress: getDisplayAddress,
   hasLocation: hasLocation

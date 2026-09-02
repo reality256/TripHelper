@@ -64,7 +64,7 @@ page {
 
 .actions {
   width: 100%;
-  padding: 40rpx 0 56rpx;
+  padding: 40rpx 0 calc(56rpx + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 

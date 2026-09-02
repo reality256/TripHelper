@@ -58,14 +58,42 @@ exports.main = async (event) => {
       })
     }
 
-    // 5. 查询账单概览（集合可能尚不存在，兼容处理）
+    // 4.1 查询已退出成员信息（历史账单/待办展示用）
+    const formerOpenids = trip.formerMemberOpenids || []
+    let formerMembers = []
+    if (formerOpenids.length > 0) {
+      const formerRes = await db.collection('users')
+        .where({ openid: db.command.in(formerOpenids) })
+        .get()
+      formerMembers = formerRes.data.map(function (u) {
+        return {
+          openid: u.openid,
+          nickName: u.nickName,
+          avatarUrl: u.avatarUrl,
+          isCreator: false
+        }
+      })
+    }
+
+    // 5. 查询账单概览（分页拉全量；集合可能尚不存在，兼容处理）
     let expenseSummary = { count: 0, totalAmount: 0 }
     try {
-      const expenseRes = await db.collection('expenses')
-        .where({ tripId })
-        .get()
-      // 排除已删除账单
-      const activeExpenses = expenseRes.data.filter(function (e) { return !e.deleted })
+      var activeExpenses = []
+      var pageSize = 100
+      var offset = 0
+      while (true) {
+        const expenseRes = await db.collection('expenses')
+          .where({ tripId, deleted: db.command.neq(true) })
+          .skip(offset)
+          .limit(pageSize)
+          .get()
+        var page = expenseRes.data || []
+        activeExpenses = activeExpenses.concat(page)
+        if (page.length < pageSize) break
+        offset += pageSize
+      }
+      // 双保险：排除已删除账单（兼容 deleted 为其他真值的脏数据）
+      activeExpenses = activeExpenses.filter(function (e) { return !e.deleted })
       // 总消费 = 支出总额 - 入账总额（与前端 calculateTotalExpense 一致）
       const totalAmount = activeExpenses.reduce(function (sum, e) {
         var amt = Number(e.amount) || 0
@@ -100,6 +128,7 @@ exports.main = async (event) => {
       data: {
         trip,
         members,
+        formerMembers,
         expenseSummary,
         itineraryPreview
       },

@@ -16,11 +16,34 @@ exports.main = async (event) => {
   if (!title || !title.trim()) return { success: false, data: null, message: '请输入行程标题' }
   if (!date) return { success: false, data: null, message: '请选择日期' }
 
-  // 校验结束时间不早于开始时间
+  // 校验时间格式（HH:mm）
+  const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+  if (startTime && !TIME_RE.test(String(startTime))) {
+    return { success: false, data: null, message: '开始时间格式不正确' }
+  }
+  if (endTime && !TIME_RE.test(String(endTime))) {
+    return { success: false, data: null, message: '结束时间格式不正确' }
+  }
+
+  // 校验结束时间不早于开始时间（分钟换算比较，避免字符串比较误判如 "9:00" > "10:00"）
   if (startTime && endTime) {
-    if (startTime > endTime) {
+    var sa = String(startTime).split(':')
+    var ea = String(endTime).split(':')
+    var st = (parseInt(sa[0]) || 0) * 60 + (parseInt(sa[1]) || 0)
+    var et = (parseInt(ea[0]) || 0) * 60 + (parseInt(ea[1]) || 0)
+    if (et < st) {
       return { success: false, data: null, message: '结束时间不能早于开始时间' }
     }
+  }
+
+  // 校验坐标范围
+  var numLat = latitude === undefined || latitude === '' ? null : Number(latitude)
+  var numLng = longitude === undefined || longitude === '' ? null : Number(longitude)
+  if (numLat !== null && (isNaN(numLat) || numLat < -90 || numLat > 90)) {
+    return { success: false, data: null, message: '纬度坐标无效' }
+  }
+  if (numLng !== null && (isNaN(numLng) || numLng < -180 || numLng > 180)) {
+    return { success: false, data: null, message: '经度坐标无效' }
   }
 
   try {
@@ -49,8 +72,8 @@ exports.main = async (event) => {
         location: locationName || location || '',
         locationName: locationName || '',
         locationAddress: locationAddress || '',
-        latitude: Number(latitude) || 0,
-        longitude: Number(longitude) || 0,
+        latitude: numLat === null ? 0 : numLat,
+        longitude: numLng === null ? 0 : numLng,
         startTime: startTime || '',
         endTime: endTime || '',
         note: note || '',

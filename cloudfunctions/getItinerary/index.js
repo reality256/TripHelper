@@ -35,13 +35,18 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '你没有权限操作该旅行' }
     }
 
-    // 2. 查询行程列表
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
+    }
+
+    // 2. 查询行程列表（单次上限 100，显式放宽到 1000 兜底）
     let itinerary = []
     try {
       const itineraryRes = await db.collection('itinerary')
         .where({ tripId })
         .orderBy('date', 'asc')
         .orderBy('startTime', 'asc')
+        .limit(1000)
         .get()
       itinerary = itineraryRes.data
     } catch (e) {

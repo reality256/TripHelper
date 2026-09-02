@@ -27,6 +27,7 @@ exports.main = async () => {
         memberOpenids: openid
       })
       .orderBy('updatedAt', 'desc')
+      .limit(1000)
       .get()
 
     // 过滤已解散的旅行（兼容旧数据无 status 字段，视为 active）

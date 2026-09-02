@@ -34,6 +34,10 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '旅行不存在' }
     }
 
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
+    }
+
     if (!trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
       return { success: false, data: null, message: '你没有权限操作该旅行' }
     }
@@ -48,6 +52,11 @@ exports.main = async (event) => {
 
     if (itinerary.tripId !== tripId) {
       return { success: false, data: null, message: '行程不属于该旅行' }
+    }
+
+    // 权限：行程创建者 或 旅行创建者（与 updateItinerary 一致）
+    if (itinerary.createdBy !== openid && trip.creatorOpenid !== openid) {
+      return { success: false, data: null, message: '你没有权限删除该行程' }
     }
 
     // 3. 删除行程

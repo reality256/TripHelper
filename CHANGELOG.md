@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## V4.1 - 上线前审计修复（2026-09-02）
+
+依据 `spec/PRE_RELEASE_AUDIT.md` 分批次修复（审计全程只读，修复经确认后执行）。
+
+### 批次 1：安全与数据正确性
+- **金额上限**：addExpense/updateExpense/updateTripBudget 补 `> 99999999` 拒绝（与前端 utils/amount.js 一致），防 Infinity/NaN 污染统计与结算
+- **结算防御**：calculateSettlement 对缺付款人/金额非法的脏账单收集 ID 明确报错（原先缺付款人直接 TypeError 且无法定位）
+- **查询分页**：getExpenses/getTripDetail/calculateSettlement 分页循环拉全量账单（where 排除 deleted，兼容无字段旧数据），修复 >100 条静默截断导致的金额算错；getItinerary/getTodos/getMyTrips 显式 `.limit(1000)` 兜底
+- **解散状态校验**：addTodo/updateTodoStatus/deleteTodo/getTodos/addExpense/getExpenses/calculateSettlement/addItinerary/deleteItinerary/getItinerary 补齐 `status==='dissolved'` 拒绝；dissolveTrip 同时清除 inviteCode；joinTrip 拒绝加入已解散旅行
+- **joinTrip 原子性**：memberOpenids 改用 `_.addToSet`（去重防并发覆盖），重新加入时 `_.pull` 清理 formerMemberOpenids；邀请码未命中延迟 400ms 抬高枚举成本
+- **邀请码生成**：createTrip 改 `crypto.randomBytes` 密码学随机源；10 次重试仍冲突时返回失败不再落重复码
+- **头像写入校验**：updateUserProfile 服务端只接受 `cloud://` 前缀 fileID（≤300 字符）；login 瘦身为只查/建用户，默认昵称改「旅友+openid 后 4 位」去掉 count() 并发重名
+- **需要重新部署的云函数（20 个）**：addExpense、updateExpense、updateTripBudget、calculateSettlement、getExpenses、getTripDetail、getItinerary、getTodos、getMyTrips、addItinerary、deleteItinerary、addTodo、updateTodoStatus、deleteTodo、dissolveTrip、joinTrip、createTrip、updateUserProfile、login、getRouteDistance
+- **MAP_KEY 环境变量化**：getRouteDistance 改 `process.env.MAP_KEY` 读取（**部署前必须在云开发控制台配置环境变量，并建议作废换新 key**）；同时补 dissolved 状态校验
+- **地图日期竞态修复**：schedule-map 引入请求代际序号（`_mapReqSeq`），日期切换后过期请求的响应直接丢弃，不再覆盖新日期数据
+- **行程编辑数据保护**：addItinerary 编辑模式加载失败显示错误态+重试并禁止提交，杜绝空白表单覆盖原行程
+- **行程删改权限对称**：deleteItinerary 补「行程创建者或旅行创建者」校验（与 updateItinerary 一致）；前端行程卡片按 `createdBy` 门控删除按钮与编辑跳转（旧数据无 createdBy 时仅旅行创建者可操作，云端兜底）
+
+### 批次 2：UX 与协作一致性
+- **expenseDetail 返回刷新**：新增 onShow 静默刷新，编辑账单返回不再显示过期金额
+- **index 首页三态**：补 loading/error+重试，失败不再误导「还没有旅行记录」
+- **表单页加载失败四态补齐**：addExpense 成员加载失败显示错误+重试（编辑模式直接返回不再带空成员回显）；addTodo 成员失败错误态+重试；budget-setting 加载失败错误态+重试（不再渲染空白可提交表单）；设置 tab「我的旅行」失败错误态+重试
+- **saveProfile 提交锁**：防连点重复上传头像；旧数据过期 temp URL 分支改为不写回头像字段（配合云端 cloud:// 校验）
+- **冷启动 login 竞态修复**：app.js `initUser` 返回 Promise 挂到 `_userReady`，tripWorkspace 加载前等待用户初始化完成（创建者管理入口/资料弹窗不再因时序缺失）
+- **former 成员昵称**：getTripDetail 新增返回已退出成员信息，前端合并进 memberMap，历史账单付款人/待办负责人不再显示「未知」
+- **需要重新部署的云函数**：getTripDetail（formerMembers 字段）
+
+### 批次 3：P3 清理与修正
+- **包体积**：删除 33 个零引用模板图片文件（images 根目录 16 个 + icons 17 个，grep 复核零引用，约 1.15MB），主包 1.7MB → 约 469KB
+- **死代码**：删除 utils/format.js（零引用）、schedule.js isUpcomingSoon/getConflictText、map.js hasEnoughForRoute、user.js getDisplayName、date.js getToday；tripWorkspace.wxss 删除 .total-card 系/.tab-placeholder 系/重复 .loading-state；tripWorkspace.js 删除死变量 hasEndTime
+- **schedule.js 修复**：sortSchedulesByTime 比较器相等返回 0（iOS/Android 排序一致）+ 无时间行程排每日末尾；detectScheduleConflicts 返回原数组下标（修复有无时间行程时冲突标记错位挂错对象）
+- **0 坐标判定**：map.js getValidScheduleLocations / schedule.js hasLocation / addItinerary 回显改为显式数值校验（赤道/本初子午线不再误判无地点）
+- **schedule-map 修复**：日期 picker 绑定 selectedDateIndex；renderMap 开头重置 summary/markers/polyline（切日期不残留上一日期数据）；初始直线改 6 位色（8 位 hex 兼容性）；驾车距离 NaN 防御
+- **云函数坐标/时间校验**：addItinerary/updateItinerary 补 HH:mm 格式校验、[-90,90]/[-180,180] 坐标范围校验（非法值拒绝，不再静默写 0,0）；updateItinerary 时间比较改分钟换算（修复字符串比较误拒 "9:00"-"10:00" 合法时段）
+- **交互细节**：addItinerary 拒绝定位授权时弹窗引导 openSetting；budget-setting 输入框首次聚焦后不再反复弹键盘；index 首页底部按钮 safe-area 适配；index onShow 加载中去重；四个提交按钮补 disabled 视觉态 +「提交中...」文案
+- **文案**：「旅友????」乱码 → 「未命名旅友」
+- **配置清理**：project.config.json 移除 quickstart 模板残留（projectname/libVersion 3.16.2/condition/cloudfunctionTemplateRoot）；删除失效的 uploadCloudFunction.sh；CLAUDE.md 云函数数量 24 → 25
+- **需要重新部署的云函数**：addItinerary、updateItinerary（坐标/时间校验）
+
+### V4.1 部署汇总
+- 本版本合计改动云函数 **21 个**，全部需要重新部署：批次1 的 20 个 + 批次3 的 updateItinerary
+- 新增/删除文件：新增 `spec/PRE_RELEASE_AUDIT.md`；删除 33 个模板图片、`utils/format.js`、`uploadCloudFunction.sh`
+- getRouteDistance 部署前必须先在云开发控制台配置 `MAP_KEY` 环境变量
+
 ## V4.0 - UI 设计系统重构（2026-07-16）
 
 ### V4 补充：清理孤立旧页面

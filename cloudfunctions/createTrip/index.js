@@ -7,13 +7,15 @@ cloud.init({
 })
 
 const db = cloud.database()
+const crypto = require('crypto')
 
-// 生成 6 位随机邀请码（大写字母 + 数字）
+// 生成 6 位随机邀请码（大写字母 + 数字，使用密码学随机源）
 function generateInviteCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let code = ''
+  var buf = crypto.randomBytes(6)
   for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+    code += chars.charAt(buf[i] % chars.length)
   }
   return code
 }
@@ -50,14 +52,21 @@ exports.main = async (event) => {
   }
 
   try {
-    // 生成唯一邀请码
+    // 生成唯一邀请码（重试耗尽仍冲突则失败，不落重复码）
     let inviteCode = generateInviteCode()
     let retryCount = 0
+    let codeAvailable = false
     while (retryCount < 10) {
       const existing = await db.collection('trips').where({ inviteCode }).get()
-      if (existing.data.length === 0) break
+      if (existing.data.length === 0) {
+        codeAvailable = true
+        break
+      }
       inviteCode = generateInviteCode()
       retryCount++
+    }
+    if (!codeAvailable) {
+      return { success: false, data: null, message: '邀请码生成失败，请重试' }
     }
 
     const trip = {

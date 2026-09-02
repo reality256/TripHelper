@@ -27,6 +27,9 @@ exports.main = async (event) => {
     if (!/^\d+(\.\d{1,2})?$/.test(String(totalBudget))) {
       return { success: false, data: null, message: '预算金额最多保留两位小数' }
     }
+    if (numBudget > 99999999) {
+      return { success: false, data: null, message: '预算金额超出上限' }
+    }
   }
 
   try {

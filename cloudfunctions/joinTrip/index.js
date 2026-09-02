@@ -7,6 +7,12 @@ cloud.init({
 })
 
 const db = cloud.database()
+const _ = db.command
+
+// 未命中时延迟，抬高暴力枚举成本
+function sleep(ms) {
+  return new Promise(function (resolve) { setTimeout(resolve, ms) })
+}
 
 exports.main = async (event) => {
   const wxContext = cloud.getWXContext()
@@ -37,10 +43,16 @@ exports.main = async (event) => {
       .get()
 
     if (tripRes.data.length === 0) {
+      await sleep(400)
       return { success: false, data: null, message: '未找到对应旅行' }
     }
 
     const trip = tripRes.data[0]
+
+    // 校验旅行状态：已解散的不可加入
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散，无法加入' }
+    }
 
     // 检查用户是否已经是成员
     if (trip.memberOpenids && trip.memberOpenids.indexOf(openid) !== -1) {
@@ -52,17 +64,16 @@ exports.main = async (event) => {
       }
     }
 
-    // 将用户加入 memberOpenids
-    const memberOpenids = trip.memberOpenids || []
-    memberOpenids.push(openid)
-
+    // 原子加入：addToSet 天然去重，避免并发加入互相覆盖；同时从历史成员列表移除（重新加入场景）
     await db.collection('trips').doc(trip._id).update({
       data: {
-        memberOpenids,
+        memberOpenids: _.addToSet(openid),
+        formerMemberOpenids: _.pull(openid),
         updatedAt: new Date()
       }
     })
 
+    var memberOpenids = (trip.memberOpenids || []).concat([openid])
     trip.memberOpenids = memberOpenids
     trip.updatedAt = new Date()
 

@@ -6,7 +6,16 @@
   </view>
 
   <view class="content">
-    <view class="empty-state" wx:if="{{trips.length === 0}}">
+    <view class="empty-state ui-loading" wx:if="{{loading}}">
+      <view class="empty-state-text">加载中...</view>
+    </view>
+
+    <view class="empty-state ui-error" wx:elif="{{error}}">
+      <view class="empty-state-text">{{error}}</view>
+      <view class="btn-secondary" bindtap="retryLoad" style="margin-top: 24rpx;">重试</view>
+    </view>
+
+    <view class="empty-state" wx:elif="{{trips.length === 0}}">
       <view class="empty-state-text">还没有旅行记录</view>
       <view class="empty-state-text">创建一次旅行，邀请朋友们一起出发吧</view>
     </view>

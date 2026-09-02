@@ -19,11 +19,16 @@ exports.main = async (event) => {
       return { success: false, data: null, message: '你没有权限操作该旅行' }
     }
 
+    if (trip.status === 'dissolved') {
+      return { success: false, data: null, message: '该旅行已解散' }
+    }
+
     var todos = []
     try {
       var res = await db.collection('todos').where({ tripId })
         .orderBy('completed', 'asc')
         .orderBy('createdAt', 'desc')
+        .limit(1000)
         .get()
       todos = res.data
     } catch (e) {

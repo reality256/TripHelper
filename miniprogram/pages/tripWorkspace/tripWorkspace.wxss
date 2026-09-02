@@ -446,25 +446,6 @@ page {
   color: #CCC;
 }
 
-/* 总金额（保留旧样式兼容） */
-.total-card {
-  text-align: center;
-  padding: 36rpx 32rpx;
-  margin: 0 24rpx 16rpx;
-}
-
-.total-label {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.total-amount {
-  font-size: 52rpx;
-  font-weight: 700;
-  color: var(--primary);
-  margin-top: 4rpx;
-}
-
 /* 账单列表 */
 .expense-list {
   padding: 0 24rpx;
@@ -847,44 +828,6 @@ page {
 .switch-detail {
   font-size: 22rpx;
   color: #999;
-}
-
-/* ===== 占位 ===== */
-.tab-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 32rpx;
-}
-
-.ph-icon {
-  font-size: 72rpx;
-  margin-bottom: 20rpx;
-  opacity: 0.5;
-}
-
-.ph-text {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #666;
-  margin-bottom: 8rpx;
-}
-
-.ph-desc {
-  font-size: 24rpx;
-  color: #BBB;
-}
-
-/* ===== 加载状态 ===== */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80rpx 32rpx;
-  color: #999;
-  font-size: 26rpx;
 }
 
 /* ===== 加载状态（ui-loading 提供基础样式） ===== */

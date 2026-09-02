@@ -30,9 +30,16 @@ Page({
     }
   },
 
-  loadDetail: function () {
+  onShow: function () {
+    // 从编辑页返回时静默刷新，避免展示过期金额
+    if (this.data.tripId && this.data.expenseId && !this.data.loading) {
+      this.loadDetail(true)
+    }
+  },
+
+  loadDetail: function (silent) {
     var that = this
-    this.setData({ loading: true })
+    if (!silent) this.setData({ loading: true })
 
     expenseService.getExpenseDetail(this.data.tripId, this.data.expenseId).then(function (data) {
       var exp = data.expense
@@ -46,6 +53,8 @@ Page({
         that.finishLoad(exp, [], null)
       })
     }).catch(function (err) {
+      // 静默刷新失败保留旧数据；首次加载失败 toast
+      if (silent) return
       wx.showToast({ title: err.message || '加载失败', icon: 'none' })
       that.setData({ loading: false })
     })

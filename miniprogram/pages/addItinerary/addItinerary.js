@@ -21,7 +21,8 @@ Page({
     endTime: '',
     note: '',
     submitting: false,
-    loading: true
+    loading: true,
+    loadError: ''
   },
 
   onLoad: function (options) {
@@ -58,7 +59,8 @@ Page({
           latitude: item.latitude || 0,
           longitude: item.longitude || 0,
           location: item.locationName || item.location || '',
-          hasMapLocation: !!(item.latitude && item.longitude),
+          hasMapLocation: (typeof item.latitude === 'number' && !isNaN(item.latitude)) &&
+                           (typeof item.longitude === 'number' && !isNaN(item.longitude)),
           startTime: item.startTime || '',
           endTime: item.endTime || '',
           note: item.note || '',
@@ -70,8 +72,13 @@ Page({
       }
     }).catch(function (err) {
       console.error('[addItinerary] 加载行程详情失败:', err)
-      that.setData({ loading: false })
-      wx.showToast({ title: err.message || '加载失败', icon: 'none' })
+      if (that.data.isEdit) {
+        // 编辑模式：加载失败禁止提交，避免空白表单覆盖原行程
+        that.setData({ loading: false, loadError: err.message || '行程详情加载失败' })
+      } else {
+        that.setData({ loading: false })
+        wx.showToast({ title: err.message || '加载失败', icon: 'none' })
+      }
     })
   },
 
@@ -100,7 +107,20 @@ Page({
       },
       fail: function (err) {
         if (err.errMsg && err.errMsg.indexOf('cancel') === -1) {
-          wx.showToast({ title: '地图选址失败', icon: 'none' })
+          var errMsg = err.errMsg || ''
+          // 授权被拒：引导去设置页开启（普通失败仅提示）
+          if (errMsg.indexOf('auth') !== -1 || errMsg.indexOf('authorize') !== -1) {
+            wx.showModal({
+              title: '需要位置权限',
+              content: '选择地点需要使用位置权限，请在设置中开启后重试',
+              confirmText: '去设置',
+              success: function (r) {
+                if (r.confirm) wx.openSetting()
+              }
+            })
+          } else {
+            wx.showToast({ title: '地图选址失败', icon: 'none' })
+          }
         }
       }
     })
@@ -119,6 +139,11 @@ Page({
   },
 
   onSubmit: function () {
+    // 编辑模式且详情加载失败：禁止提交，防止用残缺数据覆盖原行程
+    if (this.data.isEdit && this.data.loadError) {
+      wx.showToast({ title: '行程详情加载失败，无法保存', icon: 'none' })
+      return
+    }
     if (!this.data.title || !this.data.title.trim()) {
       wx.showToast({ title: '请输入行程标题', icon: 'none' }); return
     }
