@@ -1,8 +1,9 @@
 <!--pages/schedule-map/schedule-map.wxml-->
-<view class="loading" wx:if="{{loading}}"><text>加载中...</text></view>
+<view class="loading ui-loading" wx:if="{{loading}}"><text>加载中...</text></view>
 
-<view class="error-state" wx:elif="{{errorMsg}}">
-  <text>⚠️ {{errorMsg}}</text>
+<view class="error-state ui-error" wx:elif="{{errorMsg}}">
+  <view class="ui-error-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
+  <view class="ui-error-text">{{errorMsg}}</view>
 </view>
 
 <view class="container" wx:else>
@@ -30,15 +31,27 @@
   <view class="route-summary">
     <view class="rs-title">{{selectedDate}} 行程路线</view>
     <view class="rs-stats">
-      <text wx:if="{{summary.locationCount > 0}}">📍 {{summary.locationCount}} 个地点</text>
-      <text wx:if="{{summary.totalDistance}}"> · 🚗 {{summary.totalDistance}}</text>
-      <text wx:if="{{summary.totalTime}}"> · ⏱ {{summary.totalTime}}</text>
+      <view class="rs-stat" wx:if="{{summary.locationCount > 0}}">
+        <image class="rs-stat-icon" src="/images/icons/location.svg" mode="aspectFit"/>
+        <text>{{summary.locationCount}} 个地点</text>
+      </view>
+      <view class="rs-stat" wx:if="{{summary.totalDistance}}">
+        <image class="rs-stat-icon" src="/images/icons/car.svg" mode="aspectFit"/>
+        <text>{{summary.totalDistance}}</text>
+      </view>
+      <view class="rs-stat" wx:if="{{summary.totalTime}}">
+        <image class="rs-stat-icon" src="/images/icons/clock.svg" mode="aspectFit"/>
+        <text>{{summary.totalTime}}</text>
+      </view>
     </view>
-    <view class="rs-missing" wx:if="{{missingCount > 0}}">⚠️ 有 {{missingCount}} 个行程缺少地图位置，未加入路线</view>
+    <view class="rs-missing" wx:if="{{missingCount > 0}}">
+    <icon type="warn" size="16" color="#D97706" style="flex-shrink:0;margin-top:2rpx"/>
+    <text style="margin-left:8rpx">有 {{missingCount}} 个行程缺少地图位置，未加入路线</text>
+  </view>
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{points.length === 0}}">
+  <view class="empty-state ui-empty" wx:if="{{points.length === 0}}">
     <text wx:if="{{schedules.length === 0}}">当天暂无行程，无法生成地图路线。</text>
     <text wx:elif="{{summary.locationCount === 0}}">所有行程均缺少地图位置，无法生成路线。</text>
   </view>

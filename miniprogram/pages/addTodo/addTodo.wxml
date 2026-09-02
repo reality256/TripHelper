@@ -8,12 +8,10 @@
     </view>
     <view class="form-group">
       <view class="form-label">负责人</view>
-      <view class="member-select">
-        <view class="member-tag" wx:for="{{memberList}}" wx:key="openid" data-openid="{{item.openid}}" bindtap="onToggleAssignee">
-          <view class="member-check is-multi {{item.isSelected ? 'checked' : ''}}">
-            <text wx:if="{{item.isSelected}}">✓</text>
-          </view>
-          <text class="member-tag-name">{{item.nickName}}</text>
+      <view class="member-select ui-member-select">
+        <view class="member-tag ui-member-tag" wx:for="{{memberList}}" wx:key="openid" data-openid="{{item.openid}}" bindtap="onToggleAssignee">
+          <view class="member-check ui-member-check ui-member-check--multi {{item.isSelected ? 'checked' : ''}}"></view>
+          <text class="member-tag-name ui-member-tag-name">{{item.nickName}}</text>
         </view>
       </view>
     </view>

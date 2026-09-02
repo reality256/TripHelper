@@ -1,5 +1,5 @@
 /* pages/expenseDetail/expenseDetail.wxss */
-.container { padding: 24rpx; }
+.container { padding: 32rpx; }
 
 .top-actions {
   display: flex;
@@ -21,7 +21,7 @@
 }
 
 .big-amount {
-  font-size: 68rpx;
+  font-size: 64rpx;
   font-weight: 700;
   color: var(--primary);
 }
@@ -42,8 +42,9 @@
 
 .info-card {
   background: #FFF;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 8rpx 0;
+  box-shadow: 0 4rpx 16rpx rgba(26, 26, 26, 0.04);
 }
 
 .info-row {

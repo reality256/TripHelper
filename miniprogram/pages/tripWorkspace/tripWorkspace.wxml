@@ -14,34 +14,40 @@
     <block wx:if="{{activeTab === 'itinerary'}}">
 
       <!-- 加载中 -->
-      <view class="loading-state" wx:if="{{itineraryLoading}}">
-        <view class="loading-spinner"></view>
+      <view class="loading-state ui-loading" wx:if="{{itineraryLoading}}">
+        <view class="loading-spinner ui-loading-spinner"></view>
         <text>正在加载行程...</text>
       </view>
 
       <!-- 加载失败 -->
-      <view class="error-state" wx:elif="{{itineraryError}}">
-        <view class="error-state-icon">⚠️</view>
+      <view class="error-state ui-error" wx:elif="{{itineraryError}}">
+        <view class="error-state-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
         <view class="error-state-text">{{itineraryError}}</view>
         <view class="btn-secondary" bindtap="retryLoadItinerary">重试</view>
       </view>
 
       <!-- 空状态 -->
       <view class="empty-state" wx:elif="{{itineraryLoaded && itineraryEmpty}}">
-        <view class="empty-state-icon">📋</view>
         <view class="empty-state-text">暂无行程安排</view>
       </view>
 
-      <!-- 视图切换 + 行程内容 -->
+      <!-- 空状态时直接显示添加按钮 -->
+      <view class="tab-action" wx:if="{{itineraryLoaded && itineraryEmpty}}">
+        <view class="btn-primary" bindtap="goAddItinerary">添加行程</view>
+      </view>
+
+      <!-- 行程标题行 -->
       <block wx:if="{{itineraryLoaded && !itineraryEmpty}}">
-      <view class="itin-view-bar">
-        <view class="itin-view-tab {{itineraryView === 'list' ? 'active' : ''}}" data-view="list" bindtap="switchItineraryView">列表</view>
-        <view class="itin-view-tab {{itineraryView === 'timeline' ? 'active' : ''}}" data-view="timeline" bindtap="switchItineraryView">时间线</view>
-        <view class="itin-map-btn" bindtap="goScheduleMap">🗺 地图</view>
+      <view class="itin-section-header">
+        <text class="itin-section-title">行程安排</text>
+        <view class="itin-map-link" bindtap="goScheduleMap">
+          <text>地图总览</text>
+          <text class="itin-map-arrow">›</text>
+        </view>
       </view>
 
       <!-- 列表视图 -->
-      <view class="itin-list" wx:if="{{itineraryView === 'list'}}">
+      <view class="itin-list">
         <view class="itin-group" wx:for="{{itineraryGroups}}" wx:key="date">
           <view class="itin-date">{{item.date}}</view>
           <view class="card itin-card {{row.isEnded ? 'itin-ended' : ''}} {{row.showActive ? 'itin-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id" data-id="{{row._id}}" bindtap="goEditItinerary">
@@ -54,35 +60,15 @@
               </view>
               <view class="itin-right">
                 <text class="itin-time" wx:if="{{row.timeText}}">{{row.timeText}}</text>
-                <text class="itin-del {{itineraryManaging ? '' : 'itin-del-hidden'}}" data-id="{{row._id}}" bindtap="deleteItinerary">✕</text>
+                <view class="itin-del {{itineraryManaging ? '' : 'itin-del-hidden'}}" data-id="{{row._id}}" bindtap="deleteItinerary"></view>
               </view>
             </view>
-            <view class="itin-row" wx:if="{{row.location}}">📍 {{row.location}}</view>
-            <view class="itin-row itin-conflict" wx:if="{{row.hasConflict}}">⚠️ 时间冲突：与「{{row.conflictNames}}」重叠</view>
+            <view class="itin-row" wx:if="{{row.location}}">地址：{{row.location}}</view>
+            <view class="itin-row itin-conflict" wx:if="{{row.hasConflict}}">
+              <icon type="warn" size="16" color="#D97706" style="flex-shrink:0;margin-top:2rpx"/>
+              <text style="margin-left:8rpx">时间冲突：与「{{row.conflictNames}}」重叠</text>
+            </view>
             <view class="itin-note" wx:if="{{row.note}}">{{row.note}}</view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 时间线视图 -->
-      <view class="timeline-view" wx:if="{{itineraryView === 'timeline'}}">
-        <view class="tl-group" wx:for="{{itineraryGroups}}" wx:key="date">
-          <view class="tl-date">{{item.date}}</view>
-          <view class="tl-item {{row.isEnded ? 'tl-ended' : ''}} {{row.showActive ? 'tl-active' : ''}}" wx:for="{{item.items}}" wx:for-item="row" wx:key="_id" data-id="{{row._id}}" bindtap="goEditItinerary">
-            <view class="tl-marker">
-              <view class="tl-dot"></view>
-              <view class="tl-line" wx:if="{{index < item.items.length - 1}}"></view>
-            </view>
-            <view class="tl-content">
-              <view class="tl-header">
-                <text class="itin-index">{{row.dailyIndex}}</text>
-                <text class="tl-time">{{row.timeText || '未设置时间'}}</text>
-              </view>
-              <text class="tl-title">{{row.title}}</text>
-              <text class="tl-location" wx:if="{{row.location}}">📍 {{row.location}}</text>
-              <text class="tl-note" wx:if="{{row.note}}">{{row.note}}</text>
-              <text class="tl-conflict" wx:if="{{row.hasConflict}}">⚠️ 与「{{row.conflictNames}}」时间重叠</text>
-            </view>
           </view>
         </view>
       </view>
@@ -102,14 +88,14 @@
     <block wx:if="{{activeTab === 'expenses'}}">
 
       <!-- 加载中 -->
-      <view class="loading-state" wx:if="{{expensesLoading}}">
-        <view class="loading-spinner"></view>
+      <view class="loading-state ui-loading" wx:if="{{expensesLoading}}">
+        <view class="loading-spinner ui-loading-spinner"></view>
         <text>正在加载账单...</text>
       </view>
 
       <!-- 加载失败 -->
-      <view class="error-state" wx:elif="{{expensesError}}">
-        <view class="error-state-icon">⚠️</view>
+      <view class="error-state ui-error" wx:elif="{{expensesError}}">
+        <view class="error-state-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
         <view class="error-state-text">{{expensesError}}</view>
         <view class="btn-secondary" bindtap="retryLoadExpenses">重试</view>
       </view>
@@ -190,24 +176,24 @@
 
       <!-- 空状态 -->
       <view class="empty-state" wx:if="{{expensesLoaded && expenseEmpty}}">
-        <view class="empty-state-icon">💰</view>
-        <view class="empty-state-text">还没有账单记录</view>
+        <view class="empty-state-text">暂无账单记录</view>
       </view>
 
       <!-- 结算：过期提示 -->
-      <view class="stale-banner" wx:if="{{settlementStale && settlementLoaded}}">
-        <text>⚠️ 账单已更新，当前结算结果可能不是最新。请重新计算。</text>
+      <view class="stale-banner ui-banner ui-banner--warning" wx:if="{{settlementStale && settlementLoaded}}">
+        <icon type="warn" size="16" color="#D97706" style="flex-shrink:0;margin-top:2rpx"/>
+        <text style="margin-left:8rpx">账单已更新，当前结算结果可能不是最新。请重新计算。</text>
       </view>
 
       <!-- 结算：加载中 -->
-      <view class="loading-state" wx:if="{{settlementLoading}}">
-        <view class="loading-spinner"></view>
+      <view class="loading-state ui-loading" wx:if="{{settlementLoading}}">
+        <view class="loading-spinner ui-loading-spinner"></view>
         <text>正在计算结算结果...</text>
       </view>
 
       <!-- 结算：失败 -->
-      <view class="error-state" wx:elif="{{settlementError}}">
-        <view class="error-state-icon">⚠️</view>
+      <view class="error-state ui-error" wx:elif="{{settlementError}}">
+        <view class="error-state-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
         <view class="error-state-text">{{settlementError}}</view>
         <view class="btn-secondary" bindtap="onCalculateSettlement">重试</view>
       </view>
@@ -222,8 +208,9 @@
         <view class="section-title">结算结果</view>
 
         <!-- 无转账 -->
-        <view class="card settle-card" wx:if="{{!hasSettlement}}">
-          <text class="settle-done">🎉 账目已结清</text>
+        <view class="card settle-card settle-done" wx:if="{{!hasSettlement}}">
+          <icon type="success" size="20" color="#27AE60"/>
+          <text style="margin-left:8rpx">账目已结清</text>
         </view>
 
         <block wx:if="{{hasSettlement}}">
@@ -250,7 +237,7 @@
       </view>
 
       <!-- 无预算时：仅创建者可见设置入口（底部） -->
-      <view class="budget-empty" wx:if="{{budgetLoaded && !budgetSummary.hasBudget && trip.creatorOpenid === myOpenid}}">
+      <view class="budget-empty ui-banner" wx:if="{{budgetLoaded && !budgetSummary.hasBudget && trip.creatorOpenid === myOpenid}}">
         <text class="be-text">暂未设置预算</text>
         <text class="be-link" bindtap="goBudgetSetting">设置预算</text>
       </view>
@@ -264,28 +251,27 @@
 
       <!-- 筛选按钮 -->
       <view class="todo-filter-bar">
-        <view class="todo-filter-item {{todoFilter === item.key ? 'tf-active' : ''}}"
+        <view class="ui-segment-item {{todoFilter === item.key ? 'active' : ''}}"
               wx:for="{{todoFilterOptions}}" wx:key="key"
               data-key="{{item.key}}"
               bindtap="onTodoFilterChange">{{item.label}}</view>
       </view>
 
       <!-- 加载中 -->
-      <view class="loading-state" wx:if="{{todosLoading}}">
-        <view class="loading-spinner"></view>
+      <view class="loading-state ui-loading" wx:if="{{todosLoading}}">
+        <view class="loading-spinner ui-loading-spinner"></view>
         <text>正在加载待办...</text>
       </view>
 
       <!-- 加载失败 -->
-      <view class="error-state" wx:elif="{{todosError}}">
-        <view class="error-state-icon">⚠️</view>
+      <view class="error-state ui-error" wx:elif="{{todosError}}">
+        <view class="error-state-icon"><icon type="warn" size="44" color="#E6A23C"/></view>
         <view class="error-state-text">{{todosError}}</view>
         <view class="btn-secondary" bindtap="retryLoadTodos">重试</view>
       </view>
 
       <!-- 空状态 -->
       <view class="empty-state" wx:elif="{{todosLoaded && todoEmpty}}">
-        <view class="empty-state-icon">✅</view>
         <view class="empty-state-text" wx:if="{{todoFilter === 'mine'}}">暂无你负责的待办</view>
         <view class="empty-state-text" wx:elif="{{todoFilter === 'unfinished'}}">所有待办已完成</view>
         <view class="empty-state-text" wx:elif="{{todoFilter === 'finished'}}">暂无已完成的待办</view>
@@ -297,15 +283,13 @@
         <block wx:for="{{todos}}" wx:key="_id">
           <view class="card todo-card {{item.completed ? 'todo-done' : ''}}">
             <view class="todo-header">
-              <view class="todo-check" data-id="{{item._id}}" data-completed="{{item.completed}}" bindtap="toggleTodo">
-                <text wx:if="{{item.completed}}">✓</text>
-              </view>
+              <view class="todo-check" data-id="{{item._id}}" data-completed="{{item.completed}}" bindtap="toggleTodo"></view>
               <text class="todo-title">{{item.title}}</text>
-              <text class="todo-del {{todoManaging ? '' : 'itin-del-hidden'}}" data-id="{{item._id}}" bindtap="deleteTodo">✕</text>
+              <view class="todo-del {{todoManaging ? '' : 'itin-del-hidden'}}" data-id="{{item._id}}" bindtap="deleteTodo"></view>
             </view>
-            <view class="todo-meta">👤 {{item.assigneeText}}</view>
-            <view class="todo-meta" wx:if="{{item.dateText}}">📅 {{item.dateText}}</view>
-            <view class="todo-meta todo-done-time" wx:if="{{item.completed && item.doneTime}}">✅ 完成于 {{item.doneTime}}</view>
+            <view class="todo-meta">负责人：{{item.assigneeText}}</view>
+            <view class="todo-meta" wx:if="{{item.dateText}}">日期：{{item.dateText}}</view>
+            <view class="todo-meta todo-done-time" wx:if="{{item.completed && item.doneTime}}">完成于 {{item.doneTime}}</view>
             <view class="todo-note" wx:if="{{item.note}}">{{item.note}}</view>
           </view>
         </block>
@@ -391,20 +375,20 @@
           wx:for="{{tabs}}" wx:key="key"
           data-key="{{item.key}}"
           bindtap="switchTab">
-      <text class="tab-icon">{{item.icon}}</text>
+      <image class="tab-icon" src="{{activeTab === item.key ? item.iconActive : item.icon}}" mode="aspectFit"/>
       <text class="tab-label">{{item.label}}</text>
     </view>
   </view>
 
 </view>
 
-<view class="page-loading" wx:if="{{loading}}">
-  <view class="loading-spinner"></view>
+<view class="page-loading ui-page-loading" wx:if="{{loading}}">
+  <view class="loading-spinner ui-loading-spinner"></view>
   <text>加载中...</text>
 </view>
 
 <view class="page-error" wx:elif="{{!trip}}">
-  <view class="page-error-icon">⚠️</view>
+  <view class="page-error-icon"><icon type="warn" size="52" color="#E6A23C"/></view>
   <view class="page-error-text">旅行信息加载失败，请返回重试</view>
   <view class="btn-primary" bindtap="loadTrip">重新加载</view>
 </view>

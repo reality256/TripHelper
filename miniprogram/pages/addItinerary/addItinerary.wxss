@@ -15,7 +15,13 @@
 
 .location-picker:active { background: #EEF0EF; }
 
-.loc-picker-icon { font-size: 32rpx; margin-right: 16rpx; }
+/* 地图选址图标（SVG image 替代 Emoji） */
+.loc-picker-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
 
 .loc-picker-text {
   flex: 1;
@@ -23,7 +29,16 @@
   color: #BBB;
 }
 
-.loc-picker-arrow { font-size: 28rpx; color: #CCC; }
+/* CSS chevron 替代 Emoji 箭头 */
+.loc-picker-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-right: 3rpx solid #CCC;
+  border-top: 3rpx solid #CCC;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
 
 /* 已选地点卡片 */
 .location-card {

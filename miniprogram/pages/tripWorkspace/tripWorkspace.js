@@ -29,10 +29,10 @@ Page({
 
     // 底部菜单
     tabs: [
-      { key: 'itinerary', label: '行程', icon: '📋' },
-      { key: 'expenses', label: '账单', icon: '💰' },
-      { key: 'todos', label: '待办', icon: '✅' },
-      { key: 'settings', label: '设置', icon: '⚙' }
+      { key: 'itinerary', label: '行程', icon: '/images/icons/tab-itinerary.svg', iconActive: '/images/icons/tab-itinerary-active.svg' },
+      { key: 'expenses', label: '账单', icon: '/images/icons/tab-expenses.svg', iconActive: '/images/icons/tab-expenses-active.svg' },
+      { key: 'todos', label: '待办', icon: '/images/icons/tab-todos.svg', iconActive: '/images/icons/tab-todos-active.svg' },
+      { key: 'settings', label: '设置', icon: '/images/icons/tab-settings.svg', iconActive: '/images/icons/tab-settings-active.svg' }
     ],
     activeTab: 'itinerary',
 
@@ -522,7 +522,7 @@ Page({
       that.setData({
         balances: balances,
         transfers: transfers,
-        hasSettlement: balances.length > 0,
+        hasSettlement: transfers.length > 0,
         settlementLoading: false,
         settlementLoaded: true,
         settlementStale: false

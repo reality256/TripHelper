@@ -1,6 +1,6 @@
 <!--pages/budget-setting/budget-setting.wxml-->
-<view class="page-loading" wx:if="{{loading}}">
-  <view class="loading-spinner"></view>
+<view class="page-loading ui-page-loading" wx:if="{{loading}}">
+  <view class="loading-spinner ui-loading-spinner"></view>
   <text>加载中...</text>
 </view>
 

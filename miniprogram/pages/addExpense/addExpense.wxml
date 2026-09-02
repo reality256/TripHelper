@@ -9,10 +9,10 @@
       <view class="form-label">类型</view>
       <view class="type-switch">
         <view class="type-tab {{type === 'expense' ? 'type-active' : ''}}" bindtap="onToggleType">
-          <text>💰 支出</text>
+          <text>支出</text>
         </view>
         <view class="type-tab {{type === 'income' ? 'type-active type-income' : ''}}" bindtap="onToggleType">
-          <text>💚 入账</text>
+          <text>入账</text>
         </view>
       </view>
     </view>
@@ -24,7 +24,7 @@
     <view class="form-group">
       <view class="form-label">金额（元）</view>
       <input class="form-input" type="digit" placeholder="0.00" value="{{amount}}" bindinput="onAmountInput" maxlength="12"/>
-      <view class="form-hint">最多保留两位小数</view>
+      <view class="form-hint ui-form-hint">最多保留两位小数</view>
     </view>
 
     <!-- 选择分类 -->
@@ -46,15 +46,13 @@
     <!-- 付款人 / 收款人 -->
     <view class="form-group">
       <view class="form-label">{{type === 'income' ? '收款人' : '付款人'}}</view>
-      <view class="member-select">
-        <view class="member-tag"
+      <view class="member-select ui-member-select">
+        <view class="member-tag ui-member-tag"
               wx:for="{{memberList}}" wx:key="openid"
               data-openid="{{item.openid}}"
               bindtap="onSelectPayer">
-          <view class="member-check {{item.isPayer ? 'checked' : ''}}">
-            <text wx:if="{{item.isPayer}}">✓</text>
-          </view>
-          <text class="member-tag-name">{{item.nickName}}</text>
+          <view class="member-check ui-member-check {{item.isPayer ? 'checked' : ''}}"></view>
+          <text class="member-tag-name ui-member-tag-name">{{item.nickName}}</text>
         </view>
       </view>
     </view>
@@ -62,15 +60,13 @@
     <!-- 参与分摊成员 / 入账归属成员 -->
     <view class="form-group">
       <view class="form-label">{{type === 'income' ? '入账归属成员' : '参与分摊成员'}}</view>
-      <view class="member-select">
-        <view class="member-tag"
+      <view class="member-select ui-member-select">
+        <view class="member-tag ui-member-tag"
               wx:for="{{memberList}}" wx:key="openid"
               data-openid="{{item.openid}}"
               bindtap="onToggleParticipant">
-          <view class="member-check is-multi {{item.isParticipant ? 'checked' : ''}}">
-            <text wx:if="{{item.isParticipant}}">✓</text>
-          </view>
-          <text class="member-tag-name">{{item.nickName}}</text>
+          <view class="member-check ui-member-check ui-member-check--multi {{item.isParticipant ? 'checked' : ''}}"></view>
+          <text class="member-tag-name ui-member-tag-name">{{item.nickName}}</text>
           <text class="member-tag-avg" wx:if="{{item.perAmount}}">
             ¥{{item.perAmount}}
           </text>

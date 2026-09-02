@@ -14,23 +14,17 @@ exports.main = async (event) => {
   const { from, to } = event
   if (!from || !to) return { success: false, data: null, message: '缺少起终点坐标' }
 
-  var fromStr = from.latitude + ',' + from.longitude
-  var toStr = to.latitude + ',' + to.longitude
+  var fromLat = Number(from.latitude)
+  var fromLng = Number(from.longitude)
+  var toLat = Number(to.latitude)
+  var toLng = Number(to.longitude)
 
-  try {
-    var url = 'https://apis.map.qq.com/ws/direction/v1/driving/?from=' + fromStr + '&to=' + toStr + '&key=' + MAP_KEY
-    var res = await cloud.openapi.request({
-      url: url,
-      method: 'GET',
-      dataType: 'json'
-    })
-
-    // openapi.request 可能不可用，改用 http 模块
-    // fallback: 直接用 https 请求
-  } catch (e) {
-    // cloud.openapi.request 在某些环境下不可用，改用 http 模块
-    return await callWithHttp(fromStr, toStr)
+  if (isNaN(fromLat) || isNaN(fromLng) || isNaN(toLat) || isNaN(toLng)) {
+    return { success: false, data: null, message: '坐标格式无效' }
   }
+
+  var fromStr = fromLat + ',' + fromLng
+  var toStr = toLat + ',' + toLng
 
   return await callWithHttp(fromStr, toStr)
 }

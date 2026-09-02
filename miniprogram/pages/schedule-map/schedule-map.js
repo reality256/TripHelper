@@ -106,7 +106,7 @@ Page({
 
     // 计算地图视野
     var mapCenter = { latitude: 39.9, longitude: 116.4, scale: 13 }
-    var includePoints = null
+    var includePoints = []
     if (points.length > 0) {
       var lats = points.map(function (p) { return p.latitude })
       var lngs = points.map(function (p) { return p.longitude })
@@ -114,11 +114,10 @@ Page({
         latitude: (Math.min.apply(null, lats) + Math.max.apply(null, lats)) / 2,
         longitude: (Math.min.apply(null, lngs) + Math.max.apply(null, lngs)) / 2
       }
-      if (points.length >= 2) {
-        includePoints = valid.map(function (v) {
-          return { latitude: v.latitude, longitude: v.longitude }
-        })
-      }
+      // include-points 始终传数组，避免传 null 导致 map SDK fitBounds 崩溃
+      includePoints = valid.map(function (v) {
+        return { latitude: v.latitude, longitude: v.longitude }
+      })
     }
 
     this.setData({
@@ -131,7 +130,7 @@ Page({
       markers_for_include: includePoints,
       hasRoute: hasRoute,
       missingCount: missing,
-      summary: { locationCount: valid.length },
+      'summary.locationCount': valid.length,
       schedules: sorted
     })
   },
@@ -186,9 +185,9 @@ Page({
               mapPolylines.push({ points: seg, color: '#2E8B57', width: 4, arrowLine: true })
             }
           })
-          // 如果没有 API polyline，用直线兜底
+          // 如果没有 API polyline，用直线兜底（与真实路线颜色一致）
           if (mapPolylines.length === 0 && that.data.points.length >= 2) {
-            mapPolylines.push({ points: that.data.points, color: '#2E8B5788', width: 4, arrowLine: true })
+            mapPolylines.push({ points: that.data.points, color: '#2E8B57', width: 4, arrowLine: true })
           }
 
           that.setData({

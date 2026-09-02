@@ -23,11 +23,33 @@
 
 .rs-title { font-size: 30rpx; font-weight: 600; color: #1A1A1A; margin-bottom: 8rpx; }
 
-.rs-stats { font-size: 26rpx; color: #666; margin-bottom: 6rpx; }
+/* 路线统计：flex 图标+文字布局 */
+.rs-stats {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 6rpx;
+}
 
-.rs-missing { font-size: 24rpx; color: #E67E22; margin-top: 6rpx; }
+.rs-stat {
+  display: flex;
+  align-items: center;
+}
 
-.empty-state { padding: 60rpx 32rpx; text-align: center; font-size: 28rpx; color: #BBB; }
+.rs-stat + .rs-stat { margin-left: 16rpx; }
+
+.rs-stat-icon {
+  width: 26rpx;
+  height: 26rpx;
+  flex-shrink: 0;
+  margin-right: 4rpx;
+}
+
+.rs-missing { font-size: 24rpx; color: #E67E22; margin-top: 6rpx; display: flex; align-items: flex-start; }
+
+/* 空状态（ui-empty 提供基础样式，此处仅覆盖地图页特有间距） */
+.empty-state { padding-top: 60rpx; }
 
 .loc-list { padding: 0 24rpx; }
 
@@ -48,6 +70,5 @@
 
 .loc-detail { font-size: 24rpx; color: #BBB; display: block; margin-top: 2rpx; }
 
-.loading { display: flex; justify-content: center; padding-top: 200rpx; font-size: 28rpx; color: #999; }
-
-.error-state { padding: 100rpx 32rpx; text-align: center; font-size: 28rpx; color: #999; }
+/* loading（ui-loading 提供基础样式） */
+/* error-state（ui-error 提供基础样式） */

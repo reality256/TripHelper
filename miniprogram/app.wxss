@@ -6,13 +6,51 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   font-size: 28rpx;
   color: #333;
-  --primary: #2A9D8F;
-  --danger: #E8685A;
-  --text: #1A1A1A;
-  --text-secondary: #666;
-  --text-hint: #999;
-  --bg: #F5F7F6;
-  --border: #F0F0F0;
+
+  /* ===== V4 设计 Token ===== */
+
+  /* 品牌色 */
+  --color-primary: #2A9D8F;
+  --color-primary-pressed: #23877B;
+  --color-primary-light: #E8F5F3;
+
+  /* 背景色 */
+  --color-bg-page: #F5F7F6;
+  --color-bg-card: #FFFFFF;
+  --color-bg-disabled: #F2F3F3;
+
+  /* 文字色 */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+  --color-text-disabled: #B8B8B8;
+
+  /* 边框色（三档） */
+  --color-border-light: #F0F0F0;
+  --color-border-default: #E8E8E8;
+  --color-border-strong: #D0D0D0;
+
+  /* 语义色 */
+  --color-danger: #E74C3C;
+  --color-danger-light: #FDEDEC;
+  --color-success: #27AE60;
+  --color-success-light: #EAF7EF;
+  --color-warning: #E67E22;
+  --color-warning-light: #FFF4E8;
+  --color-income: #E74C3C;            /* 入账金额色，语义独立于危险色 */
+
+  /* 特殊语义 */
+  --color-stale-bg: #FFF8E1;
+  --color-stale-text: #B8860B;
+
+  /* ===== 旧变量别名（向后兼容，逐步退役） ===== */
+  --primary: var(--color-primary);
+  --danger: var(--color-danger);
+  --text: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-hint: var(--color-text-tertiary);
+  --bg: var(--color-bg-page);
+  --border: var(--color-border-light);
 }
 
 button {
@@ -152,4 +190,399 @@ textarea.form-input {
   padding: 100rpx 0;
   color: #999;
   font-size: 28rpx;
+}
+
+/* ========================================
+   V4 UI 基础类（ui- 前缀）
+   与旧类并行存在，后续阶段逐步迁移
+   ======================================== */
+
+/* ---- 全局 spinner 动画（仅此一份） ---- */
+@keyframes ui-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* 兼容旧动画名，页面迁移后移除 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ---- 页面容器 ---- */
+.ui-page {
+  padding: 32rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ---- 卡片系统 ---- */
+
+/* 标准内容卡片 */
+.ui-card {
+  padding: 28rpx 32rpx;
+  border-radius: 20rpx;
+  background: var(--color-bg-card, #FFFFFF);
+  box-shadow: 0 4rpx 16rpx rgba(26, 26, 26, 0.04);
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
+}
+
+/* 紧凑列表卡片 */
+.ui-card--compact {
+  padding: 24rpx 28rpx;
+}
+
+/* ---- 排版 ---- */
+
+/* Section 标题 */
+.ui-section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text-primary, #1A1A1A);
+  margin: 24rpx 0 12rpx;
+}
+
+/* 文字层级辅助 */
+.ui-text-secondary {
+  font-size: 24rpx;
+  color: var(--color-text-secondary, #666);
+}
+
+.ui-text-tertiary {
+  font-size: 22rpx;
+  color: var(--color-text-tertiary, #999);
+}
+
+/* ---- 分割线 ---- */
+
+/* 轻分割（卡片内部） */
+.ui-divider-light {
+  border-top: 1rpx solid var(--color-border-light, #F0F0F0);
+}
+
+/* 默认分割 */
+.ui-divider {
+  border-top: 1rpx solid var(--color-border-default, #E8E8E8);
+}
+
+/* ---- 按钮系统 ---- */
+
+.ui-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.ui-btn::after {
+  border: none;
+}
+
+.ui-btn:active {
+  opacity: 0.85;
+}
+
+/* 主按钮 */
+.ui-btn--primary {
+  width: 100%;
+  height: 96rpx;
+  background: var(--color-primary, #2A9D8F);
+  border-radius: 48rpx;
+  color: #FFFFFF;
+  line-height: 96rpx;
+}
+
+/* 次按钮 */
+.ui-btn--secondary {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #FFFFFF;
+  color: var(--color-primary, #2A9D8F);
+  border-radius: 48rpx;
+  border: 2rpx solid var(--color-primary, #2A9D8F);
+}
+
+/* 危险按钮 */
+.ui-btn--danger {
+  width: 100%;
+  height: 88rpx;
+  background: #FFFFFF;
+  border: 2rpx solid var(--color-danger, #E74C3C);
+  border-radius: 14rpx;
+  color: var(--color-danger, #E74C3C);
+  font-size: 30rpx;
+}
+
+.ui-btn--danger:active {
+  background: var(--color-danger, #E74C3C);
+  color: #FFFFFF;
+}
+
+/* 小按钮 */
+.ui-btn--sm {
+  height: 72rpx;
+  font-size: 26rpx;
+  border-radius: 14rpx;
+}
+
+/* 禁用态 */
+.ui-btn[disabled],
+.ui-btn--disabled {
+  background: var(--color-bg-disabled, #F2F3F3);
+  color: var(--color-text-disabled, #B8B8B8);
+  pointer-events: none;
+  opacity: 1;
+}
+
+/* ---- 输入框 ---- */
+
+.ui-input {
+  width: 100%;
+  height: 88rpx;
+  background: var(--color-bg-page, #F5F7F6);
+  border: 2rpx solid var(--color-border-default, #E8E8E8);
+  border-radius: 14rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: var(--color-text-primary, #1A1A1A);
+  box-sizing: border-box;
+}
+
+.ui-input:focus {
+  border-color: var(--color-primary, #2A9D8F);
+}
+
+/* ---- 标签 ---- */
+
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  white-space: nowrap;
+}
+
+.ui-tag--primary {
+  color: var(--color-primary, #2A9D8F);
+  background: var(--color-primary-light, #E8F5F3);
+  border: 1rpx solid var(--color-primary, #2A9D8F);
+}
+
+.ui-tag--warning {
+  color: var(--color-warning, #E67E22);
+  background: var(--color-warning-light, #FFF4E8);
+}
+
+.ui-tag--danger {
+  color: var(--color-danger, #E74C3C);
+  background: var(--color-danger-light, #FDEDEC);
+}
+
+.ui-tag--default {
+  color: var(--color-text-tertiary, #999);
+  background: var(--color-bg-page, #F5F7F6);
+}
+
+/* ---- 分段切换控件 ---- */
+
+.ui-segment {
+  display: flex;
+  gap: 12rpx;
+}
+
+.ui-segment-item {
+  padding: 10rpx 28rpx;
+  font-size: 24rpx;
+  color: var(--color-text-tertiary, #999);
+  background: var(--color-bg-card, #FFFFFF);
+  border-radius: 28rpx;
+  border: 2rpx solid var(--color-border-light, #F0F0F0);
+}
+
+.ui-segment-item.active {
+  color: var(--color-primary, #2A9D8F);
+  border-color: var(--color-primary, #2A9D8F);
+  background: var(--color-primary-light, #E8F5F3);
+  font-weight: 500;
+}
+
+/* ---- Loading / 空状态 / 错误状态 ---- */
+
+/* 加载中 */
+.ui-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 32rpx;
+  color: var(--color-text-tertiary, #999);
+  font-size: 26rpx;
+}
+
+.ui-loading-spinner {
+  width: 52rpx;
+  height: 52rpx;
+  border: 4rpx solid var(--color-border-default, #E8E8E8);
+  border-top-color: var(--color-primary, #2A9D8F);
+  border-radius: 50%;
+  animation: ui-spin 0.8s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+/* 页面级 loading（垂直居中） */
+.ui-page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--color-text-tertiary, #999);
+  font-size: 28rpx;
+}
+
+/* 空状态 */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 32rpx;
+}
+
+.ui-empty-icon {
+  font-size: 72rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.ui-empty-text {
+  font-size: 28rpx;
+  color: var(--color-text-tertiary, #999);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.ui-empty-desc {
+  font-size: 24rpx;
+  color: var(--color-text-disabled, #B8B8B8);
+  text-align: center;
+  margin-top: 8rpx;
+}
+
+/* 错误状态 */
+.ui-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 32rpx;
+}
+
+.ui-error-icon {
+  font-size: 56rpx;
+  margin-bottom: 16rpx;
+}
+
+.ui-error-text {
+  font-size: 26rpx;
+  color: var(--color-text-tertiary, #999);
+  margin-bottom: 28rpx;
+  text-align: center;
+}
+
+/* 提示横幅 */
+.ui-banner {
+  padding: 16rpx 24rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.ui-banner--warning {
+  background: var(--color-stale-bg, #FFF8E1);
+  color: var(--color-stale-text, #B8860B);
+}
+
+.ui-banner--danger {
+  background: var(--color-danger-light, #FDEDEC);
+  color: var(--color-danger, #E74C3C);
+}
+
+/* ---- 成员选择器 ---- */
+
+.ui-member-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.ui-member-tag {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-page, #F5F7F6);
+  border-radius: 14rpx;
+  padding: 16rpx 24rpx;
+}
+
+.ui-member-tag:active {
+  background: #E8ECEA;
+}
+
+.ui-member-check {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--color-border-strong, #D0D0D0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+/* CSS 对勾 — 选中态白色勾号，线宽统一 */
+.ui-member-check.checked::after,
+.ui-member-check--checked::after {
+  content: '';
+  display: block;
+  width: 10rpx;
+  height: 18rpx;
+  border-right: 3rpx solid #FFF;
+  border-bottom: 3rpx solid #FFF;
+  transform: rotate(45deg);
+  margin-top: -3rpx;
+}
+
+.ui-member-check--multi {
+  border-radius: 8rpx;
+}
+
+.ui-member-check.checked,
+.ui-member-check--checked {
+  background: var(--color-primary, #2A9D8F);
+  border-color: var(--color-primary, #2A9D8F);
+}
+
+.ui-member-tag-name {
+  font-size: 28rpx;
+}
+
+/* ---- 表单提示 ---- */
+
+.ui-form-hint {
+  font-size: 22rpx;
+  color: var(--color-text-disabled, #B8B8B8);
+  margin-top: 6rpx;
+}
+
+.ui-form-error {
+  font-size: 22rpx;
+  color: var(--color-danger, #E74C3C);
+  margin-top: 6rpx;
 }

@@ -1,5 +1,82 @@
 # CHANGELOG
 
+## V4.0 - UI 设计系统重构（2026-07-16）
+
+### V4 补充：清理孤立旧页面
+- **删除 5 个 C 类僵尸页面**：`tripDetail`、`itinerary`（旧）、`expenses`（旧）、`settlement`（独立）、`members`（独立）—— 均自 V2.0 起零有效入站路由，功能已由 `tripWorkspace` 内联替代
+- `app.json` 从 15 页缩减到 **10 页**
+
+### V4 补充：行程视图简化为仅列表
+- **tripWorkspace** 行程 tab：移除"列表/时间线"分段切换入口，仅保留列表视图；地图按钮位置不变；时间线 WXML 模板和 WXSS 样式代码保留（如需恢复可直接加回入口）
+
+### V4 补充：图标与 Emoji 体系统一（部分）
+- **新增 11 个 SVG 图标**（`images/icons/`）：底部 tab 图标 ×8（行程/账单/待办/设置，各含灰色未选中 + 白色选中两态）、路线统计图标 ×3（car/clock/location）
+- **tripWorkspace 底部 tab**：emoji 占位移除，接入 SVG 图标（`<image>` 渲染，选中态白色图标配 `var(--primary)` 底色，未选中 `#999` 与 tab-label 同色）
+- **schedule-map** 路线统计（地点数/距离/时长）+ **addItinerary** 选址按钮：接入 car/clock/location SVG 图标
+- **Emoji → `<icon>` 组件**：各页面错误/警告提示 ⚠️ → `<icon type="warn">`（tripWorkspace 各 tab 错误态/过期横幅、schedule-map 错误态/缺位置提示）；结算"🎉 账目已结清" → `<icon type="success">`
+- **Emoji → CSS 绘制/文本标签**：待办勾选框改为圆圈 + CSS 对勾（`.todo-check`）；成员选择 ✓ → `ui-member-check` CSS 对勾；行程/待办删除 ✕ → CSS 双线绘制（`.itin-del`/`.todo-del`）；👤/📅/📍 → "负责人："/"日期："/"地址：" 文本标签；addExpense 类型切换 💰/💚 → 纯文本；index 空状态 🧳 移除
+- 图标来源 Material Icons（Apache 2.0），24×24 单路径 fill，与现有图标风格一致
+- 注意：SVG 依赖 WebView 渲染（app.json 未启用 Skyline），真机测试需重点确认 tab 图标显示
+
+### V4 补充：平台适配与 Bug 修复
+- **app.json** 新增 `requiredPrivateInfos: ["chooseLocation"]`：基础库合规要求，缺失时 `wx.chooseLocation` 在真机不可用（行程选址依赖）
+- **schedule-map** 三处修复：
+  - `include-points` 始终传数组（含单点场景），不再传 `null`，规避地图 SDK fitBounds 真机崩溃
+  - 初始 `summary` 由整体替换对象改为 `'summary.locationCount'` 路径更新，避免与路线 API 的 `totalDistance`/`totalTime` 更新互相覆盖
+  - 无路线数据时兜底 polyline 颜色由半透明 `#2E8B5788` 改为与真实路线一致的 `#2E8B57`
+- **tripWorkspace** 结算判定：`hasSettlement` 由 `balances.length > 0` 改为 `transfers.length > 0`，修复只有余额条目但无实际转账时展示空结算结果
+- **getRouteDistance 云函数重构**：移除在某些环境不可用的 `cloud.openapi.request` 路径，统一走 http 直连；坐标入参增加 `Number()` 强转与 NaN 校验，非法坐标直接返回错误
+- **需要重新部署的云函数**：`getRouteDistance`
+
+### 阶段 7：清理与验收
+- **全项目搜索验证**：旧危险色 `#E8685A` → 零残留；`@keyframes spin` → 仅 app.wxss 全局保留；`.loading-spinner` → 零页面级定义；`itin-view-tab` / `todo-filter-item` / `tf-active` → 零残留
+- **硬编码颜色审计**：页面级硬编码颜色已全部对齐 Token 规范值（`#E74C3C` / `#E67E22` / `#27AE60` 等语义正确），后续版本可逐步 `var()` 化
+- **border-radius 审计**：全部页面 border-radius 值在 Token 规范范围内，无异常值
+- **新增 `spec/V4_UI_REVIEW.md`**：完整实施报告（改造覆盖、删除统计、未处理项、C 类页面清单、后续建议）
+- **V4.0 完成**：15/15 页面覆盖，~200 行重复样式删除，30+ ui- 全局类，21 个 CSS Token，零 JS/云函数修改
+
+### 阶段 6：地图页面和状态收尾
+- **schedule-map**：loading/error/empty 接入 `ui-` 全局类；移除重复的 loading/error-state 样式定义
+- **index**：无需改动（已完全对齐 Token 规范：`var(--primary)` 品牌色、标准卡片 padding、全局按钮和空状态类）
+- **全项目覆盖确认**：15 个注册页面全部完成 V4 统一（10 个 A 类深度改造 + 5 个 C 类最小必要统一）
+- **总计删除 ~200 行重复样式**（spinner ×2、keyframes ×2、segment 控件 ×2 组、成员选择器 ×2、loading/error/banner ×多处）
+- **零 JS 修改、零业务逻辑变更、零云函数触及**
+
+### 阶段 5：表单页与公共重复样式治理
+- **app.wxss**：新增 `ui-member-select` / `ui-member-tag` / `ui-member-check` / `ui-member-check--multi` / `ui-member-tag-name` 成员选择器基础类；新增 `ui-form-hint` / `ui-form-error` 表单提示类
+- **addExpense**：WXML 接入 ui-member-* 全局类；WXSS 移除 ~55 行重复成员选择器样式（仅保留页面专属 `member-tag-avg`、`split-hint`、类型切换、分类标签）
+- **addTodo**：WXML 接入 ui-member-* 全局类 + 修正为 `ui-member-check--multi` 模式；WXSS 移除 ~7 行重复样式，现仅剩 `.page-title` 和 `.card` 微调
+- **addItinerary**：loading 接入 `ui-loading`
+- **两个表单页共删除 ~60 行重复样式**；成员选择器现在全项目统一
+
+### 阶段 4：详情页与旧页面迁移
+- **expenseDetail**（A 类）：容器 padding `24rpx` → `32rpx`；主金额 `68rpx` → `64rpx`；信息卡片圆角 `16rpx` → `20rpx` + 补齐阴影；loading 接入 `ui-loading`
+- **tripDetail / expenses / itinerary**（C 类，仅作必要统一）：loading 接入 `ui-loading`，其余样式保持不变
+
+### 阶段 3：结算与成员页面改造
+- **settlement**：section-title 统一 `28rpx/600/#1A1A1A`；loading 接入 `ui-loading`；`var(--danger)` → `#E74C3C` 通过 Token 别名自动生效
+- **members**：member-card 内边距 `24rpx 32rpx` → `24rpx 28rpx`（紧凑标准）；member-name `30rpx` → `28rpx`；loading 接入 `ui-loading`
+- **两个页面改动量小**（本身风格接近 Token 规范，仅微调）
+
+### 阶段 2：核心工作台改造
+- **tripWorkspace**：loading/error/banner 接入 `ui-` 全局类；行程视图切换和待办筛选统一为 `ui-segment-item`（圆角统一 28rpx）；移除重复 spinner 和 `@keyframes spin` 定义；卡片阴影统一为 `0 4rpx 16rpx rgba(26,26,26,0.04)`；member-card 内边距修正为紧凑标准 `24rpx 28rpx`；section-title 统一 `28rpx/600`；stale-banner 和 budget-empty 简化为 ui-banner 派生
+- **budget-setting**：移除重复 spinner 和 keyframes 定义；卡片内边距统一为标准 `28rpx 32rpx`
+- **两个页面共删除 ~70 行重复样式**（spinner 定义 ×2、keyframes ×2、segment 控件样式 ×2 组）
+
+### 阶段 1：设计 Token 与基础样式
+- **app.wxss**：新增 21 个 CSS 自定义属性（`--color-*` 命名体系），旧变量通过别名映射保持兼容
+- **app.wxss**：新增 `ui-` 前缀全局基础类：卡片（标准/紧凑）、按钮（主/次/危险/小/禁用）、输入框、标签、分段切换、分割线、排版辅助、loading spinner、空状态、错误状态、提示横幅
+- **全局 spinner**：`@keyframes ui-spin` 统一定义在 app.wxss，同时保留 `@keyframes spin` 兼容旧引用
+- **新增 `spec/DESIGN_TOKENS.md`**：完整 Token 规范（颜色/圆角/字号/间距/控件高度/阴影/动效/页面例外）+ 全局 class 速查表
+- **未迁移任何页面**：旧 class（`.card`、`.btn-primary` 等）全部保留，与 `ui-` 新类并行
+
+### 阶段 0：项目核查
+- 确认 15 个注册页面中 10 个 A 类（在用）、5 个 C 类（孤立）
+- 确认无自定义组件、无样式隔离配置
+- 输出完整导航关系图和同名 class 冲突清单
+
+---
+
 ## V3.3 - 分类预算暂缓与文档补充（2026-07-16）
 
 ### 分类预算：暂缓上线，保留接口

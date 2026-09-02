@@ -1,7 +1,7 @@
 <!--pages/addItinerary/addItinerary.wxml-->
 <view class="container">
   <!-- 加载中 -->
-  <view class="loading" wx:if="{{loading}}"><text>加载中...</text></view>
+  <view class="loading ui-loading" wx:if="{{loading}}"><text>加载中...</text></view>
 
   <block wx:else>
   <view class="page-title">{{isEdit ? '编辑行程' : '添加行程'}}</view>
@@ -27,9 +27,9 @@
       </view>
       <!-- 未选：点击选址 -->
       <view class="location-picker" wx:else bindtap="onChooseLocation">
-        <text class="loc-picker-icon">📍</text>
+        <image class="loc-picker-icon" src="/images/icons/location.svg" mode="aspectFit"/>
         <text class="loc-picker-text">点击选择地图地点</text>
-        <text class="loc-picker-arrow">❯</text>
+        <view class="loc-picker-arrow"></view>
       </view>
       <view class="loc-clear" wx:if="{{hasMapLocation}}" catchtap="onClearLocation">清除地点</view>
     </view>

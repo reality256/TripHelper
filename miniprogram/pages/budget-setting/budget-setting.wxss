@@ -1,34 +1,11 @@
 /* pages/budget-setting/budget-setting.wxss */
 
-.page-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  color: #999;
-  font-size: 28rpx;
-}
-
-.loading-spinner {
-  width: 52rpx;
-  height: 52rpx;
-  border: 4rpx solid #E8E8E8;
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 20rpx;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
+/* 页面级 loading（ui-page-loading 提供基础样式） */
 
 /* 当前总花费卡片 */
 .expense-info-card {
   text-align: center;
-  padding: 24rpx 32rpx;
+  padding: 28rpx 32rpx;
 }
 
 .ei-label {
@@ -46,7 +23,7 @@
 /* 当前预算卡片 */
 .budget-info-card {
   text-align: center;
-  padding: 32rpx;
+  padding: 28rpx 32rpx;
 }
 
 .bi-label {
@@ -63,7 +40,7 @@
 
 /* 输入卡片 */
 .form-card {
-  padding: 32rpx;
+  padding: 28rpx 32rpx;
 }
 
 .form-label {
