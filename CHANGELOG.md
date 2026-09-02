@@ -7,7 +7,7 @@
 - `app.json` 从 15 页缩减到 **10 页**
 
 ### V4 补充：行程视图简化为仅列表
-- **tripWorkspace** 行程 tab：移除"列表/时间线"分段切换入口，仅保留列表视图；地图按钮位置不变；时间线 WXML 模板和 WXSS 样式代码保留（如需恢复可直接加回入口）
+- **tripWorkspace** 行程 tab：移除"列表/时间线"分段切换入口，仅保留列表视图；地图按钮位置不变；时间线 WXML 模板随入口移除，WXSS `.tl-*` 样式（约 95 行）与 `itineraryView`/`switchItineraryView` 死代码后续一并清理（如需恢复时间线可从 git 历史 V3.2 找回）
 
 ### V4 补充：图标与 Emoji 体系统一（部分）
 - **新增 11 个 SVG 图标**（`images/icons/`）：底部 tab 图标 ×8（行程/账单/待办/设置，各含灰色未选中 + 白色选中两态）、路线统计图标 ×3（car/clock/location）
@@ -17,6 +17,32 @@
 - **Emoji → CSS 绘制/文本标签**：待办勾选框改为圆圈 + CSS 对勾（`.todo-check`）；成员选择 ✓ → `ui-member-check` CSS 对勾；行程/待办删除 ✕ → CSS 双线绘制（`.itin-del`/`.todo-del`）；👤/📅/📍 → "负责人："/"日期："/"地址：" 文本标签；addExpense 类型切换 💰/💚 → 纯文本；index 空状态 🧳 移除
 - 图标来源 Material Icons（Apache 2.0），24×24 单路径 fill，与现有图标风格一致
 - 注意：SVG 依赖 WebView 渲染（app.json 未启用 Skyline），真机测试需重点确认 tab 图标显示
+
+### V4 补充：管理模式的卡片一致性
+- 删除按钮显隐改用 `wx:if` 控制（行程 `itineraryManaging` / 待办 `todoManaging`），移除 `.itin-del-hidden` 类——原 `display: none` 方案与后置的 `.todo-del { display: flex }` 同优先级冲突，导致待办删除按钮异常常显
+- 删除按钮高度 72rpx → 40rpx，与卡片头部行高一致，管理模式不再撑高卡片、不再推移布局
+- 行程卡片：管理模式下隐藏时间、删除按钮占据同一右侧槽位，普通/管理模式布局完全一致；非管理模式删除按钮完全不占位，时间贴右对齐
+
+### V4 补充：tab 切换改懒加载 + 下拉刷新
+- 切换 tab 不再每次触发云端刷新（原 `switchTab → loadTabData` 每次 1-2 次云调用，是切 tab 卡顿转圈的主因）；改为首次进入懒加载，之后切换秒开
+- `.tab-content` 由 view 改为 `scroll-view` 并启用 refresher 下拉刷新（页面为内部滚动布局，页级 `enablePullDownRefresh` 不触发，必须用 scroll-view 组件方案）；下拉时静默刷新当前 tab（不闪 loading，失败 toast 且保留旧数据）
+- 结算过期提示改为按实际变化触发：`loadExpenses` 对比前后账单签名（金额/类型/付款人/参与人），仅当账单确实变化且已计算过结算时标记过期，单纯刷新不再误报
+- 修复：scroll-view 在 flex 布局中高度被内容撑开、底部 tab 栏被顶下去（`.tab-content` 增加 `height: 0` 强制以 flex 剩余空间收缩）
+
+### V4 补充：待办筛选简化
+- 移除"我的"筛选：行程内所有成员看到同一份待办列表（云函数 `getTodos` 本就返回全量，仅前端过滤）；`todoFilter` 默认值 `mine` → `all`，`applyTodoFilter` 删除按 openid 过滤分支，"暂无你负责的待办"空状态文案同步清理
+
+### V4 补充：getRouteDistance 权限加固
+- 云函数增加行程成员校验：仅 `trip.memberOpenids` 内成员可调用，防止任意用户滥用腾讯地图 API 配额；`itineraryService.getRouteDistance` 签名改为 `(tripId, from, to)`，schedule-map 同步传参
+- **需要重新部署的云函数**：`getRouteDistance`
+
+### V4 补充：账单操作区上移
+- 账单 tab：添加账单/计算结算按钮与账单概览块上下互换，按钮优先触达；顶部操作区增加 20rpx 上间距保持视觉平衡
+
+### V4 补充：地图序号图钉
+- 新增 `images/markers/`：序号图钉 PNG ×20（品牌青 #2A9D8F + 白色序号 + 白色描边）+ 无序号兜底图钉 ×1，生成脚本保留在 `tools/gen-marker-pins.ps1`（换品牌色可重新生成）
+- `utils/map.js` `buildMapMarkers`：移除 label 徽标方案（数字悬空锚定在图钉上方，真机易错位抖动），改为 `iconPath` 序号图钉，尖端指向地点；序号 > 20 时用无序号图钉兜底
+- 状态色统一为品牌青，已结束/进行中状态改为点击气泡标题前缀显示
 
 ### V4 补充：平台适配与 Bug 修复
 - **app.json** 新增 `requiredPrivateInfos: ["chooseLocation"]`：基础库合规要求，缺失时 `wx.chooseLocation` 在真机不可用（行程选址依赖）

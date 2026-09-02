@@ -7,8 +7,8 @@
     <view class="top-meta"> {{trip.destination}} · {{trip.startDate}} - {{trip.endDate}} · {{memberCount}}人</view>
   </view>
 
-  <!-- 内容区 -->
-  <view class="tab-content">
+  <!-- 内容区（scroll-view + refresher 支持下拉刷新） -->
+  <scroll-view class="tab-content" scroll-y refresher-enabled refresher-background="#F5F7F6" refresher-triggered="{{refresherTriggered}}" bindrefresherrefresh="onPullDownRefresh">
 
     <!-- ===== 行程 tab ===== -->
     <block wx:if="{{activeTab === 'itinerary'}}">
@@ -59,8 +59,8 @@
                 <text class="itin-status itin-status-upcoming" wx:elif="{{row.showActive}}">即将开始</text>
               </view>
               <view class="itin-right">
-                <text class="itin-time" wx:if="{{row.timeText}}">{{row.timeText}}</text>
-                <view class="itin-del {{itineraryManaging ? '' : 'itin-del-hidden'}}" data-id="{{row._id}}" bindtap="deleteItinerary"></view>
+                <text class="itin-time" wx:if="{{row.timeText && !itineraryManaging}}">{{row.timeText}}</text>
+                <view class="itin-del" wx:if="{{itineraryManaging}}" data-id="{{row._id}}" bindtap="deleteItinerary"></view>
               </view>
             </view>
             <view class="itin-row" wx:if="{{row.location}}">地址：{{row.location}}</view>
@@ -133,26 +133,26 @@
       <!-- 顶部操作区 -->
       <!-- 已设置预算时：轻量概览，不重复显示总消费 -->
       <view class="expense-top-bar" wx:if="{{budgetLoaded && budgetSummary.hasBudget}}">
+        <view class="expense-top-actions">
+          <view class="btn-primary btn-sm" bindtap="goAddExpense">添加账单</view>
+          <view class="btn-secondary btn-sm {{expenseEmpty ? 'btn-disabled' : ''}}" bindtap="onCalculateSettlement">计算结算</view>
+        </view>
         <view class="expense-summary" wx:if="{{!expenseEmpty}}">
           <text class="expense-overview-title">账单概览</text>
           <text class="expense-overview-info">共 {{expenses.length}} 笔账单</text>
           <text class="expense-overview-info" wx:if="{{lastExpenseTime}}"> · 最近更新 {{lastExpenseTime}}</text>
         </view>
-        <view class="expense-top-actions">
-          <view class="btn-primary btn-sm" bindtap="goAddExpense">添加账单</view>
-          <view class="btn-secondary btn-sm {{expenseEmpty ? 'btn-disabled' : ''}}" bindtap="onCalculateSettlement">计算结算</view>
-        </view>
       </view>
 
       <!-- 未设置预算时：保留原有总消费统计 -->
       <view class="expense-top-bar" wx:else>
-        <view class="expense-summary">
-          <text class="expense-sum-label">总消费 ¥{{expenseTotal}}</text>
-          <text class="expense-sum-count" wx:if="{{!expenseEmpty}}"> · {{expenses.length}} 笔</text>
-        </view>
         <view class="expense-top-actions">
           <view class="btn-primary btn-sm" bindtap="goAddExpense">添加账单</view>
           <view class="btn-secondary btn-sm {{expenseEmpty ? 'btn-disabled' : ''}}" bindtap="onCalculateSettlement">计算结算</view>
+        </view>
+        <view class="expense-summary">
+          <text class="expense-sum-label">总消费 ¥{{expenseTotal}}</text>
+          <text class="expense-sum-count" wx:if="{{!expenseEmpty}}"> · {{expenses.length}} 笔</text>
         </view>
       </view>
 
@@ -272,8 +272,7 @@
 
       <!-- 空状态 -->
       <view class="empty-state" wx:elif="{{todosLoaded && todoEmpty}}">
-        <view class="empty-state-text" wx:if="{{todoFilter === 'mine'}}">暂无你负责的待办</view>
-        <view class="empty-state-text" wx:elif="{{todoFilter === 'unfinished'}}">所有待办已完成</view>
+        <view class="empty-state-text" wx:if="{{todoFilter === 'unfinished'}}">所有待办已完成</view>
         <view class="empty-state-text" wx:elif="{{todoFilter === 'finished'}}">暂无已完成的待办</view>
         <view class="empty-state-text" wx:else>暂无待办事项</view>
       </view>
@@ -285,7 +284,7 @@
             <view class="todo-header">
               <view class="todo-check" data-id="{{item._id}}" data-completed="{{item.completed}}" bindtap="toggleTodo"></view>
               <text class="todo-title">{{item.title}}</text>
-              <view class="todo-del {{todoManaging ? '' : 'itin-del-hidden'}}" data-id="{{item._id}}" bindtap="deleteTodo"></view>
+              <view class="todo-del" wx:if="{{todoManaging}}" data-id="{{item._id}}" bindtap="deleteTodo"></view>
             </view>
             <view class="todo-meta">负责人：{{item.assigneeText}}</view>
             <view class="todo-meta" wx:if="{{item.dateText}}">日期：{{item.dateText}}</view>
@@ -367,7 +366,7 @@
 
     </view>
 
-  </view>
+  </scroll-view>
 
   <!-- 底部菜单栏 -->
   <view class="bottom-bar">

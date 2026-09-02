@@ -43,7 +43,6 @@ Page({
     itineraryLoading: false,
     itineraryLoaded: false,
     itineraryError: '',
-    itineraryView: 'list',  // 'list' | 'timeline'
 
     // 账单模块
     expenses: [],
@@ -67,16 +66,19 @@ Page({
     todosLoaded: false,
     todosError: '',
     todosFull: [],
-    todoFilter: 'mine',
+    todoFilter: 'all',
     todoFilterOptions: [
-      { key: 'mine', label: '我的' },
       { key: 'all', label: '全部' },
       { key: 'unfinished', label: '未完成' },
       { key: 'finished', label: '已完成' }
     ],
 
+    // 下拉刷新（scroll-view refresher 状态）
+    refresherTriggered: false,
+
     // 设置模块
     myTrips: [],
+    myTripsLoaded: false,
     myOpenid: '',
 
     // 预算模块
@@ -115,12 +117,10 @@ Page({
           this.setData({ user: user, profileNickName: user.nickName || '', profileAvatarUrl: rawAvatar })
         }
       }
-      // 账单 tab：从添加页/预算页返回时刷新账单 + trip（获取最新 budget）
+      // 从子页面返回时刷新当前 tab 数据（账单 tab 额外刷新 trip 获取最新 budget；
+      // 结算过期标记已内聚到 loadExpenses 成功回调）
       if (this.data.activeTab === 'expenses' && this.data.expensesLoaded) {
         this.refreshTripThenReloadExpenses()
-        if (this.data.settlementLoaded) {
-          this.setData({ settlementStale: true })
-        }
       } else {
         this.loadTabData()
       }
@@ -249,37 +249,52 @@ Page({
     })
   },
 
-  // 切换 tab（退出管理模式）
+  // 切换 tab（退出管理模式；数据懒加载：首次进入才拉取，之后切换不刷新，靠下拉刷新）
   switchTab: function (e) {
     var key = e.currentTarget.dataset.key
     if (key === this.data.activeTab) return
     this.setData({ activeTab: key, itineraryManaging: false, todoManaging: false })
-    this.loadTabData()
-  },
-
-  // 根据当前 tab 加载对应数据
-  loadTabData: function () {
-    if (this.data.activeTab === 'itinerary') {
+    if (key === 'itinerary' && !this.data.itineraryLoaded) {
       this.loadItinerary()
-    } else if (this.data.activeTab === 'expenses') {
+    } else if (key === 'expenses' && !this.data.expensesLoaded) {
       this.refreshTripThenReloadExpenses()
-    } else if (this.data.activeTab === 'todos') {
+    } else if (key === 'todos' && !this.data.todosLoaded) {
       this.loadTodos()
-    } else if (this.data.activeTab === 'settings') {
-      // 设置 tab 数据在 loadTrip 中已加载（members, trip, inviteCode）
+    } else if (key === 'settings' && !this.data.myTripsLoaded) {
       this.loadMyTrips()
     }
+  },
+
+  // 根据当前 tab 刷新对应数据（silent：下拉刷新模式，不显示 loading 转圈）
+  loadTabData: function (silent) {
+    if (this.data.activeTab === 'itinerary') {
+      this.loadItinerary(silent)
+    } else if (this.data.activeTab === 'expenses') {
+      this.refreshTripThenReloadExpenses(silent)
+    } else if (this.data.activeTab === 'todos') {
+      this.loadTodos(silent)
+    } else if (this.data.activeTab === 'settings') {
+      this.loadMyTrips(silent)
+    }
+  },
+
+  // 下拉刷新（scroll-view refresher）：静默刷新当前 tab 数据
+  onPullDownRefresh: function () {
+    if (this._pullingDown) return
+    this._pullingDown = true
+    this.setData({ refresherTriggered: true })
+    this.loadTabData(true)
+  },
+
+  // 下拉刷新结束：收起 refresher 指示器
+  finishPullDown: function () {
+    this._pullingDown = false
+    this.setData({ refresherTriggered: false })
   },
 
   // ===== 行程 =====
   toggleItineraryManage: function () {
     this.setData({ itineraryManaging: !this.data.itineraryManaging })
-  },
-
-  switchItineraryView: function (e) {
-    var view = e.currentTarget.dataset.view
-    if (view === this.data.itineraryView) return
-    this.setData({ itineraryView: view })
   },
 
   goScheduleMap: function () {
@@ -289,9 +304,11 @@ Page({
     wx.navigateTo({ url: '/pages/schedule-map/schedule-map?tripId=' + this.data.tripId + '&date=' + today })
   },
 
-  loadItinerary: function () {
+  loadItinerary: function (silent) {
     var that = this
-    this.setData({ itineraryLoading: true, itineraryError: '' })
+    if (!silent) {
+      this.setData({ itineraryLoading: true, itineraryError: '' })
+    }
     itineraryService.getItinerary(this.data.tripId).then(function (data) {
       var list = data.itinerary || []
       var now = new Date()
@@ -357,7 +374,14 @@ Page({
         itineraryLoaded: true,
         itineraryError: ''
       })
+      if (silent) that.finishPullDown()
     }).catch(function (err) {
+      if (silent) {
+        console.error('[tripWorkspace] 行程刷新失败:', err)
+        wx.showToast({ title: err.message || '行程刷新失败', icon: 'none' })
+        that.finishPullDown()
+        return
+      }
       console.error('[tripWorkspace] 行程加载失败:', err)
       that.setData({
         itineraryLoading: false,
@@ -406,26 +430,36 @@ Page({
   // ===== 账单 =====
 
   // 先刷新 trip 数据（获取最新 budget），再加载账单
-  refreshTripThenReloadExpenses: function () {
+  refreshTripThenReloadExpenses: function (silent) {
     var that = this
     tripService.getTripDetail(this.data.tripId).then(function (data) {
       // 只更新 trip 字段（含 budget），不动成员列表等
       that.setData({ trip: data.trip })
-      that.loadExpenses()
+      that.loadExpenses(silent)
     }).catch(function () {
       // 即使刷新失败也照常加载账单
-      that.loadExpenses()
+      that.loadExpenses(silent)
     })
   },
 
-  loadExpenses: function () {
+  loadExpenses: function (silent) {
     var that = this
     var memberMap = this.data.memberMap || {}
 
-    this.setData({ expensesLoading: true, expensesError: '' })
+    if (!silent) {
+      this.setData({ expensesLoading: true, expensesError: '' })
+    }
 
     expenseService.getExpenses(this.data.tripId).then(function (data) {
       var rawExpenses = data.expenses || []
+
+      // 账单签名：仅结算相关字段（金额/类型/付款人/参与人/存在性），用于判断数据是否真正变化
+      var signature = rawExpenses.map(function (e) {
+        var parts = (e.participantOpenids || []).slice().sort()
+        return [e._id, e.type, e.amount, e.payerOpenid, parts.join(',')].join(':')
+      }).sort().join('|')
+      var billsChanged = (that._expenseSignature !== undefined && that._expenseSignature !== signature)
+      that._expenseSignature = signature
 
       // 复用公共函数计算总消费（支出计入、入账扣减）
       var displayTotal = budgetUtils.calculateTotalExpense(rawExpenses)
@@ -480,7 +514,19 @@ Page({
         budgetSummary: budgetUtils.calculateBudgetSummary(rawExpenses, tripBudget, that.data.memberCount),
         budgetLoaded: true
       })
+
+      // 结算过期判定：仅当账单数据相对上次加载确实变化时才提示（单纯刷新不提示）
+      if (billsChanged && that.data.settlementLoaded) {
+        that.setData({ settlementStale: true })
+      }
+      if (silent) that.finishPullDown()
     }).catch(function (err) {
+      if (silent) {
+        console.error('[tripWorkspace] 账单刷新失败:', err)
+        wx.showToast({ title: err.message || '账单刷新失败', icon: 'none' })
+        that.finishPullDown()
+        return
+      }
       console.error('[tripWorkspace] 账单加载失败:', err)
       that.setData({
         expensesLoading: false,
@@ -554,10 +600,12 @@ Page({
   },
 
   // ===== 待办 =====
-  loadTodos: function () {
+  loadTodos: function (silent) {
     var that = this
     var memberMap = this.data.memberMap || {}
-    this.setData({ todosLoading: true, todosError: '' })
+    if (!silent) {
+      this.setData({ todosLoading: true, todosError: '' })
+    }
     todoService.getTodos(this.data.tripId).then(function (data) {
       var todos = (data.todos || []).map(function (t) {
         // 格式化负责人员昵称
@@ -590,7 +638,14 @@ Page({
         todosError: ''
       })
       that.applyTodoFilter()
+      if (silent) that.finishPullDown()
     }).catch(function (err) {
+      if (silent) {
+        console.error('[tripWorkspace] 待办刷新失败:', err)
+        wx.showToast({ title: err.message || '待办刷新失败', icon: 'none' })
+        that.finishPullDown()
+        return
+      }
       console.error('[tripWorkspace] 待办加载失败:', err)
       that.setData({
         todosLoading: false,
@@ -614,14 +669,9 @@ Page({
   applyTodoFilter: function () {
     var full = this.data.todosFull || []
     var filter = this.data.todoFilter
-    var myOpenid = this.data.myOpenid || ''
     var filtered
 
-    if (filter === 'mine') {
-      filtered = full.filter(function (t) {
-        return (t.assigneeOpenids || []).indexOf(myOpenid) !== -1
-      })
-    } else if (filter === 'unfinished') {
+    if (filter === 'unfinished') {
       filtered = full.filter(function (t) { return !t.completed })
     } else if (filter === 'finished') {
       filtered = full.filter(function (t) { return t.completed })
@@ -670,16 +720,21 @@ Page({
   },
 
   // ===== 设置 =====
-  loadMyTrips: function () {
+  loadMyTrips: function (silent) {
     var that = this
     tripService.getMyTrips().then(function (data) {
       // 只显示其他旅行（非当前）
       var others = (data.trips || []).filter(function (t) {
         return t._id !== that.data.tripId
       })
-      that.setData({ myTrips: others })
+      that.setData({ myTrips: others, myTripsLoaded: true })
+      if (silent) that.finishPullDown()
     }).catch(function (err) {
       console.error('[tripWorkspace] 我的旅行加载失败:', err)
+      if (silent) {
+        wx.showToast({ title: '我的旅行刷新失败', icon: 'none' })
+        that.finishPullDown()
+      }
     })
   },
 

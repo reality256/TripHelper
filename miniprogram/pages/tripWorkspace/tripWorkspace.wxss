@@ -39,7 +39,9 @@ page {
 /* 内容区 */
 .tab-content {
   flex: 1;
-  overflow-y: auto;
+  /* 关键：scroll-view 在 flex 布局中会被内容撑开（高度不收缩），
+     必须显式给 height: 0 强制其以 flex 分配的剩余空间为准，否则底部栏被顶下去 */
+  height: 0;
   background: #F5F7F6;
   padding: 24rpx 0 0;
 }
@@ -171,7 +173,7 @@ page {
 
 .itin-del {
   width: 72rpx;
-  height: 72rpx;
+  height: 40rpx;
   position: relative;
   display: flex;
   align-items: center;
@@ -195,10 +197,6 @@ page {
 .itin-del:active::before,
 .itin-del:active::after {
   background: var(--danger, #E74C3C);
-}
-
-.itin-del-hidden {
-  visibility: hidden;
 }
 
 .itin-row {
@@ -380,7 +378,7 @@ page {
 
 /* 顶部操作区 */
 .expense-top-bar {
-  padding: 0 24rpx 20rpx;
+  padding: 20rpx 24rpx 20rpx;
 }
 
 .expense-summary {
@@ -536,103 +534,6 @@ page {
   border-top: 1rpx solid #F5F5F5;
 }
 
-/* ===== 时间线视图 ===== */
-.timeline-view { padding: 0 24rpx; }
-
-.tl-group { margin-bottom: 24rpx; }
-
-.tl-date {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8rpx;
-}
-
-.tl-item {
-  display: flex;
-  padding-left: 8rpx;
-}
-
-.tl-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 48rpx;
-  flex-shrink: 0;
-  padding-top: 4rpx;
-}
-
-.tl-dot {
-  width: 18rpx;
-  height: 18rpx;
-  border-radius: 50%;
-  background: var(--primary);
-  flex-shrink: 0;
-}
-
-.tl-item.tl-ended .tl-dot { background: #CCC; }
-.tl-item.tl-active .tl-dot { background: #E67E22; width: 22rpx; height: 22rpx; }
-
-.tl-line {
-  width: 3rpx;
-  flex: 1;
-  background: #E8E8E8;
-  margin: 4rpx 0;
-  min-height: 32rpx;
-}
-
-.tl-content {
-  flex: 1;
-  padding: 0 0 24rpx 16rpx;
-}
-
-.tl-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4rpx;
-}
-
-.tl-header .itin-index {
-  width: 32rpx;
-  height: 32rpx;
-  font-size: 20rpx;
-  margin-right: 10rpx;
-}
-
-.tl-time {
-  font-size: 24rpx;
-  color: #888;
-}
-
-.tl-title {
-  font-size: 28rpx;
-  font-weight: 500;
-  display: block;
-  margin-bottom: 2rpx;
-}
-
-.tl-item.tl-ended .tl-title { color: #BBB; }
-
-.tl-location {
-  font-size: 24rpx;
-  color: #999;
-  display: block;
-}
-
-.tl-note {
-  font-size: 22rpx;
-  color: #CCC;
-  display: block;
-  margin-top: 4rpx;
-}
-
-.tl-conflict {
-  font-size: 22rpx;
-  color: #E67E22;
-  margin-top: 4rpx;
-  display: block;
-}
-
 /* 账单卡片可点击进入详情 */
 .expense-card-tap:active {
   background: #F9F9F9;
@@ -775,7 +676,7 @@ page {
 
 .todo-del {
   width: 72rpx;
-  height: 72rpx;
+  height: 40rpx;
   position: relative;
   display: flex;
   align-items: center;

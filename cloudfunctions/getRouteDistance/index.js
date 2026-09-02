@@ -11,8 +11,22 @@ exports.main = async (event) => {
   const openid = wxContext.OPENID
   if (!openid) return { success: false, data: null, message: '无法获取用户身份' }
 
-  const { from, to } = event
+  const { tripId, from, to } = event
+  if (!tripId) return { success: false, data: null, message: '缺少旅行 ID' }
   if (!from || !to) return { success: false, data: null, message: '缺少起终点坐标' }
+
+  // 权限校验：仅行程成员可计算路线，防止任意用户滥用地图 API 配额
+  const db = cloud.database()
+  try {
+    const tripRes = await db.collection('trips').doc(tripId).get()
+    const trip = tripRes.data
+    if (!trip || !trip.memberOpenids || trip.memberOpenids.indexOf(openid) === -1) {
+      return { success: false, data: null, message: '你没有权限操作该旅行' }
+    }
+  } catch (e) {
+    console.error('[getRouteDistance] 行程校验失败:', e.message || e)
+    return { success: false, data: null, message: '旅行校验失败' }
+  }
 
   var fromLat = Number(from.latitude)
   var fromLng = Number(from.longitude)

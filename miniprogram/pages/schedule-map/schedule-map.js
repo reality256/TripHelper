@@ -159,7 +159,7 @@ Page({
     var done = 0
 
     pairs.forEach(function (pair, idx) {
-      itineraryService.getRouteDistance(pair.from, pair.to).then(function (res) {
+      itineraryService.getRouteDistance(that.data.tripId, pair.from, pair.to).then(function (res) {
         totalDist += res.distance
         totalDur += res.duration
         if (res.polyline && res.polyline.length > 0) {

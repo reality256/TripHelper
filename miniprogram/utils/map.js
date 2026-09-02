@@ -38,7 +38,9 @@ function getMissingLocationCount(schedules) {
 }
 
 /**
- * 构建地图 markers（带编号徽标 + 可点开气泡）
+ * 构建地图 markers（序号图钉 + 可点开气泡）
+ * 序号直接画在图钉图片内（images/markers/pin-N.png），
+ * 相比 label 徽标方案在真机上无错位问题；尖端指向地点坐标。
  * @param {Array} schedules - 已排序、含 dailyIndex、有经纬度的行程
  * @param {Object} statusMap - 可选的行程状态映射 { idx: 'ongoing'|'ended'|... }
  * @returns {Array}
@@ -46,37 +48,22 @@ function getMissingLocationCount(schedules) {
 function buildMapMarkers(schedules, statusMap) {
   statusMap = statusMap || {}
   return schedules.map(function (s, idx) {
-    var num = String(s.dailyIndex || idx + 1)
+    var num = Number(s.dailyIndex) || (idx + 1)
     var status = statusMap[idx] || ''
-    var isOngoing = (status === 'ongoing')
-    var isEnded = (status === 'ended')
-
-    // 状态色
-    var markerColor = isEnded ? '#BBBBBB' : (isOngoing ? '#E67E22' : '#2A9D8F')
+    // 状态不进图钉颜色（统一品牌青），改为气泡标题前缀
+    var titlePrefix = status === 'ended' ? '已结束 · ' : (status === 'ongoing' ? '进行中 · ' : '')
 
     return {
       id: idx,
       latitude: s.latitude,
       longitude: s.longitude,
+      // 序号 1-20 用对应图钉，超出用无序号图钉兜底
+      iconPath: (num >= 1 && num <= 20) ? '/images/markers/pin-' + num + '.png' : '/images/markers/pin-n.png',
       width: 36,
-      height: 36,
-      // 编号标签：显示为圆形徽标
-      label: {
-        content: num,
-        color: '#FFFFFF',
-        fontSize: 14,
-        bgColor: markerColor,
-        borderRadius: 18,
-        borderWidth: 2,
-        borderColor: '#FFFFFF',
-        padding: 6,
-        textAlign: 'center',
-        anchorX: -9,
-        anchorY: -36
-      },
+      height: 43,
       // 点击后显示详情气泡
       callout: {
-        content: (s.title || ''),
+        content: titlePrefix + (s.title || ''),
         padding: 8,
         borderRadius: 8,
         bgColor: '#FFFFFF',
